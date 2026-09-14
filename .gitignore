@@ -1,0 +1,24 @@
+.venv/
+.setup-cache/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local dependency/runtime caches. Recreate them on the target computer.
+_python_deps/
+node_modules/
+.mypy_cache/
+
+# Generated drawings, temporary release trees, logs and local backups.
+tmp/
+output/
+outputs/
+release/
+dist/
+build/
+backups/
+工作日志/
+*.log
+
+# Keep the current LibreDWG runtime only; the older duplicate is not shipped.
+libredwg-0.14-win64/

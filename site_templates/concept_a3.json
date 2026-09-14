@@ -1,0 +1,111 @@
+{
+  "name": "A3部材表概念现场",
+  "paper": {
+    "width": 420.0,
+    "height": 297.0,
+    "inner_margin": 10.0,
+    "bottom_info_top": 55.0,
+    "revision_left": 392.0,
+    "revision_number_left": 397.0,
+    "revision_bottom": 55.0,
+    "revision_cell_height": 4.0,
+    "revision_slots": 58
+  },
+  "headers": {
+    "member_name": ["部件名称", "部件", "部材名", "部材名称", "部材符号", "符号名称"],
+    "category": ["种类", "種類", "分类", "分類", "部材种类", "部材種類", "部材種別"],
+    "position": ["部位", "位置", "箇所", "区分"],
+    "section": ["断面", "断面尺寸", "断面寸法", "断面サイズ", "サイズ"],
+    "material": ["材质", "材質", "材料"],
+    "joint": ["接合符号", "接合記号", "継手符号", "継手記号", "接头符号"],
+    "remarks": ["备注", "備考", "注记", "注記"]
+  },
+  "category_order": ["大梁", "小梁"],
+  "category_aliases": {
+    "大梁": ["大梁表", "OOBARI", "大ばり"],
+    "小梁": ["小梁表", "KOBARI", "小ばり"]
+  },
+  "frame_dwg": "",
+  "frame_placeholders": {
+    "drawing_name": "図面名称",
+    "drawing_number": "図面番号",
+    "version": "R-X",
+    "creation_date": "20xx/xx/xx",
+    "revision_date": "20XX/XX/XX",
+    "revision_spacing": 5.0
+  },
+  "labels": {
+    "revision_history": "更新履历",
+    "legend": "图例 / 记号说明",
+    "legend_note": "特殊符号与一般注记由现场模板确定",
+    "site_info": "公司 / 现场信息",
+    "drawing_name": "图纸名称",
+    "drawing_number": "图号",
+    "version": "版本"
+  },
+  "drawing_list": {
+    "sheet_names": ["图纸列表", "図面リスト", "Drawing List"],
+    "name_headers": ["图纸名称", "図面名称", "Drawing Name"],
+    "number_headers": ["图纸编号", "図面番号", "図番", "Drawing Number"],
+    "submission_date_cell": ""
+  },
+  "dynamic_table_layout": {
+    "fixed_row_height": 2.5,
+    "fixed_text_height": 1.0,
+    "left": 16.0,
+    "right": 386.0,
+    "top": 277.0,
+    "bottom": 63.0,
+    "horizontal_gap": 8.0,
+    "cell_height": 7.0,
+    "min_row_height": 2.2
+  },
+  "tables": [
+    {
+      "id": "oobari",
+      "title": "大梁表",
+      "category": "大梁",
+      "x": 16.0,
+      "top": 277.0,
+      "max_height": 214.0,
+      "header_height": 7.0,
+      "row_height": 7.0,
+      "min_row_height": 3.2,
+      "layer": "TABLE_OOBARI",
+      "columns": [
+        {"field": "member_name", "label": "部件", "width": 26.0},
+        {"field": "position", "label": "部位", "width": 18.0},
+        {"field": "section", "label": "断面", "width": 56.0},
+        {"field": "material", "label": "材质", "width": 24.0},
+        {"field": "joint", "label": "接合", "width": 24.0},
+        {"field": "remarks", "label": "备注", "width": 26.0}
+      ]
+    },
+    {
+      "id": "kobari",
+      "title": "小梁表",
+      "category": "小梁",
+      "x": 198.0,
+      "top": 277.0,
+      "max_height": 185.0,
+      "header_height": 7.0,
+      "row_height": 7.0,
+      "min_row_height": 3.2,
+      "layer": "TABLE_KOBARI",
+      "columns": [
+        {"field": "member_name", "label": "部件", "width": 22.0},
+        {"field": "position", "label": "部位", "width": 17.0},
+        {"field": "section", "label": "断面", "width": 34.0},
+        {"field": "material", "label": "材质", "width": 16.0},
+        {"field": "joint", "label": "接合", "width": 15.0}
+      ]
+    }
+  ],
+  "note_area": {
+    "x": 310.0,
+    "y": 63.0,
+    "width": 76.0,
+    "height": 65.0,
+    "label": "楼层绑定注记 / 详图插入区"
+  }
+}

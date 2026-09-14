@@ -1,0 +1,1452 @@
+{
+  "measured_at": "2026-09-04 08:23:02 +0900",
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 151 Stepping 2, GenuineIntel",
+  "logical_processors": 20,
+  "source": "C:\\Users\\62301\\Desktop\\部材リスト\\テスト用部材データ0904.xlsx",
+  "frame": "C:\\Users\\62301\\Desktop\\部材リスト\\図面テンプレート.dwg",
+  "source_hashes": {
+    "C:\\Users\\62301\\Desktop\\部材リスト\\テスト用部材データ0904.xlsx": "712e5c2a2fa43125f2ae4a6eed485eb203a93614f985bc481394c47d63db270e",
+    "C:\\Users\\62301\\Desktop\\部材リスト\\図面テンプレート.dwg": "215f91651ba087c8089e9af58edd48e96a9b766a5f4ee0e5cd4c8b886a103ec3",
+    "C:\\Users\\62301\\Desktop\\部材リスト\\図面テンプレート_テキスト枠.dwg": "dc6ea28bbf762ef6142224d0eb77b81ba237b208fd7444c5bc91b99eeafc355f"
+  },
+  "test_input": "C:\\Users\\62301\\Desktop\\部材リスト\\outputs\\01a05d12-c37e-7963-95ee-47146f559f0a\\benchmark_20260904\\测试用_2F至13F.xlsx",
+  "input_sizes": {
+    "2": 380,
+    "12": 2280
+  },
+  "measurement": "Sequential fresh processes, disk caches primed; generate_drawings entry to return; original code unmodified",
+  "excluded": [
+    "GUI clicks/preview",
+    "printer output",
+    "drawing-list PDF",
+    "PDF merging",
+    "workbook duplication"
+  ],
+  "warmup": {
+    "run_id": "2_pdf_dwg_r0",
+    "size": 2,
+    "mode": "pdf_dwg",
+    "repetition": 0,
+    "seconds": 12.669630599964876,
+    "stages": {
+      "read_workbook": 0.0188444999512285,
+      "apply_submission_highlighting": 7.599999662488699e-06,
+      "render_dxf": 1.0109142000437714,
+      "render_cad_pdf": 10.204242099949624,
+      "convert_dxf_to_dwg": 1.432516300061252
+    },
+    "calls": {
+      "read_workbook": 1,
+      "apply_submission_highlighting": 1,
+      "render_dxf": 2,
+      "render_cad_pdf": 2,
+      "convert_dxf_to_dwg": 2
+    },
+    "rows": 380,
+    "files": [
+      {
+        "format": "pdf",
+        "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r0\\2Fリスト.pdf",
+        "bytes": 1194482
+      },
+      {
+        "format": "dwg",
+        "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r0\\2Fリスト.dwg",
+        "bytes": 76932
+      },
+      {
+        "format": "pdf",
+        "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r0\\3Fリスト.pdf",
+        "bytes": 1536991
+      },
+      {
+        "format": "dwg",
+        "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r0\\3Fリスト.dwg",
+        "bytes": 90848
+      }
+    ],
+    "validated": true
+  },
+  "summary": [
+    {
+      "sheets": 2,
+      "mode": "pdf",
+      "median_seconds": 10.819624099996872,
+      "min_seconds": 10.77860940003302,
+      "max_seconds": 10.920978199981619,
+      "runs": [
+        10.920978199981619,
+        10.77860940003302,
+        10.819624099996872
+      ],
+      "stage_medians": {
+        "read_workbook": 0.016067499993368983,
+        "apply_submission_highlighting": 6.099988240748644e-06,
+        "render_dxf": 0.9192989000002854,
+        "render_cad_pdf": 9.882276999996975
+      }
+    },
+    {
+      "sheets": 2,
+      "mode": "dwg",
+      "median_seconds": 1.9106797000276856,
+      "min_seconds": 1.903619599994272,
+      "max_seconds": 1.9339576999773271,
+      "runs": [
+        1.9339576999773271,
+        1.9106797000276856,
+        1.903619599994272
+      ],
+      "stage_medians": {
+        "read_workbook": 0.01628739997977391,
+        "apply_submission_highlighting": 4.299974534660578e-06,
+        "render_dxf": 0.7616091000381857,
+        "convert_dxf_to_dwg": 1.1305931999813765
+      }
+    },
+    {
+      "sheets": 2,
+      "mode": "pdf_dwg",
+      "median_seconds": 12.267842300003394,
+      "min_seconds": 12.174510299984831,
+      "max_seconds": 12.274370300001465,
+      "runs": [
+        12.267842300003394,
+        12.174510299984831,
+        12.274370300001465
+      ],
+      "stage_medians": {
+        "read_workbook": 0.017976000031922013,
+        "apply_submission_highlighting": 5.099980626255274e-06,
+        "render_dxf": 0.9874417000100948,
+        "render_cad_pdf": 9.824682999984361,
+        "convert_dxf_to_dwg": 1.419484600017313
+      }
+    },
+    {
+      "sheets": 12,
+      "mode": "pdf",
+      "median_seconds": 79.26056490000337,
+      "min_seconds": 78.93822450004518,
+      "max_seconds": 79.6617147999932,
+      "runs": [
+        79.6617147999932,
+        79.26056490000337,
+        78.93822450004518
+      ],
+      "stage_medians": {
+        "read_workbook": 0.0697224999894388,
+        "apply_submission_highlighting": 5.799985956400633e-06,
+        "render_dxf": 4.414375899999868,
+        "render_cad_pdf": 74.76017940015299
+      }
+    },
+    {
+      "sheets": 12,
+      "mode": "dwg",
+      "median_seconds": 11.561342699977104,
+      "min_seconds": 11.397044400044251,
+      "max_seconds": 11.572052799980156,
+      "runs": [
+        11.561342699977104,
+        11.397044400044251,
+        11.572052799980156
+      ],
+      "stage_medians": {
+        "read_workbook": 0.0694567000027746,
+        "apply_submission_highlighting": 7.299997378140688e-06,
+        "render_dxf": 3.7586363999871537,
+        "convert_dxf_to_dwg": 7.664406300114933
+      }
+    },
+    {
+      "sheets": 12,
+      "mode": "pdf_dwg",
+      "median_seconds": 87.60685380001087,
+      "min_seconds": 87.116010800004,
+      "max_seconds": 88.02316129999235,
+      "runs": [
+        88.02316129999235,
+        87.60685380001087,
+        87.116010800004
+      ],
+      "stage_medians": {
+        "read_workbook": 0.07873619999736547,
+        "apply_submission_highlighting": 5.800044164061546e-06,
+        "render_dxf": 4.497807900013868,
+        "render_cad_pdf": 74.82416620000731,
+        "convert_dxf_to_dwg": 8.19670659978874
+      }
+    }
+  ],
+  "runs": [
+    {
+      "run_id": "2_pdf_r1",
+      "size": 2,
+      "mode": "pdf",
+      "repetition": 1,
+      "seconds": 10.920978199981619,
+      "stages": {
+        "read_workbook": 0.016067499993368983,
+        "apply_submission_highlighting": 1.1200027074664831e-05,
+        "render_dxf": 0.9256905000074767,
+        "render_cad_pdf": 9.972692899988033
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 2,
+        "render_cad_pdf": 2
+      },
+      "rows": 380,
+      "files": [
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_r1\\2Fリスト.pdf",
+          "bytes": 1194482
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_r1\\3Fリスト.pdf",
+          "bytes": 1536991
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "2_dwg_r1",
+      "size": 2,
+      "mode": "dwg",
+      "repetition": 1,
+      "seconds": 1.9339576999773271,
+      "stages": {
+        "read_workbook": 0.01628739997977391,
+        "apply_submission_highlighting": 4.299974534660578e-06,
+        "render_dxf": 0.773492600012105,
+        "convert_dxf_to_dwg": 1.1416708000469953
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 2,
+        "convert_dxf_to_dwg": 2
+      },
+      "rows": 380,
+      "files": [
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_dwg_r1\\2Fリスト.dwg",
+          "bytes": 76932
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_dwg_r1\\3Fリスト.dwg",
+          "bytes": 90848
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "2_pdf_dwg_r1",
+      "size": 2,
+      "mode": "pdf_dwg",
+      "repetition": 1,
+      "seconds": 12.267842300003394,
+      "stages": {
+        "read_workbook": 0.01762509997934103,
+        "apply_submission_highlighting": 4.499976057559252e-06,
+        "render_dxf": 0.9874417000100948,
+        "render_cad_pdf": 9.84051420004107,
+        "convert_dxf_to_dwg": 1.419484600017313
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 2,
+        "render_cad_pdf": 2,
+        "convert_dxf_to_dwg": 2
+      },
+      "rows": 380,
+      "files": [
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r1\\2Fリスト.pdf",
+          "bytes": 1194482
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r1\\2Fリスト.dwg",
+          "bytes": 76932
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r1\\3Fリスト.pdf",
+          "bytes": 1536991
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r1\\3Fリスト.dwg",
+          "bytes": 90848
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "12_pdf_r1",
+      "size": 12,
+      "mode": "pdf",
+      "repetition": 1,
+      "seconds": 79.6617147999932,
+      "stages": {
+        "read_workbook": 0.0697224999894388,
+        "apply_submission_highlighting": 6.699992809444666e-06,
+        "render_dxf": 4.4294808999984525,
+        "render_cad_pdf": 75.14418050006498
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 12,
+        "render_cad_pdf": 12
+      },
+      "rows": 2280,
+      "files": [
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r1\\2Fリスト.pdf",
+          "bytes": 1194482
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r1\\3Fリスト.pdf",
+          "bytes": 1536991
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r1\\4Fリスト.pdf",
+          "bytes": 1194869
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r1\\5Fリスト.pdf",
+          "bytes": 1537707
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r1\\6Fリスト.pdf",
+          "bytes": 1195585
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r1\\7Fリスト.pdf",
+          "bytes": 1537290
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r1\\8Fリスト.pdf",
+          "bytes": 1196388
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r1\\9Fリスト.pdf",
+          "bytes": 1538255
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r1\\10Fリスト.pdf",
+          "bytes": 1195078
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r1\\11Fリスト.pdf",
+          "bytes": 1537218
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r1\\12Fリスト.pdf",
+          "bytes": 1195537
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r1\\13Fリスト.pdf",
+          "bytes": 1538011
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "12_dwg_r1",
+      "size": 12,
+      "mode": "dwg",
+      "repetition": 1,
+      "seconds": 11.561342699977104,
+      "stages": {
+        "read_workbook": 0.0697725000209175,
+        "apply_submission_highlighting": 7.299997378140688e-06,
+        "render_dxf": 3.7145042999181896,
+        "convert_dxf_to_dwg": 7.767865000059828
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 12,
+        "convert_dxf_to_dwg": 12
+      },
+      "rows": 2280,
+      "files": [
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r1\\2Fリスト.dwg",
+          "bytes": 76932
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r1\\3Fリスト.dwg",
+          "bytes": 90848
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r1\\4Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r1\\5Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r1\\6Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r1\\7Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r1\\8Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r1\\9Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r1\\10Fリスト.dwg",
+          "bytes": 76937
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r1\\11Fリスト.dwg",
+          "bytes": 90853
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r1\\12Fリスト.dwg",
+          "bytes": 76937
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r1\\13Fリスト.dwg",
+          "bytes": 90853
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "12_pdf_dwg_r1",
+      "size": 12,
+      "mode": "pdf_dwg",
+      "repetition": 1,
+      "seconds": 88.02316129999235,
+      "stages": {
+        "read_workbook": 0.07899930002167821,
+        "apply_submission_highlighting": 5.800044164061546e-06,
+        "render_dxf": 4.415350200026296,
+        "render_cad_pdf": 75.32306630001403,
+        "convert_dxf_to_dwg": 8.19670659978874
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 12,
+        "render_cad_pdf": 12,
+        "convert_dxf_to_dwg": 12
+      },
+      "rows": 2280,
+      "files": [
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\2Fリスト.pdf",
+          "bytes": 1194482
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\2Fリスト.dwg",
+          "bytes": 76932
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\3Fリスト.pdf",
+          "bytes": 1536991
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\3Fリスト.dwg",
+          "bytes": 90848
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\4Fリスト.pdf",
+          "bytes": 1194869
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\4Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\5Fリスト.pdf",
+          "bytes": 1537707
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\5Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\6Fリスト.pdf",
+          "bytes": 1195585
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\6Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\7Fリスト.pdf",
+          "bytes": 1537290
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\7Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\8Fリスト.pdf",
+          "bytes": 1196388
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\8Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\9Fリスト.pdf",
+          "bytes": 1538255
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\9Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\10Fリスト.pdf",
+          "bytes": 1195078
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\10Fリスト.dwg",
+          "bytes": 76937
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\11Fリスト.pdf",
+          "bytes": 1537218
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\11Fリスト.dwg",
+          "bytes": 90853
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\12Fリスト.pdf",
+          "bytes": 1195537
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\12Fリスト.dwg",
+          "bytes": 76937
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\13Fリスト.pdf",
+          "bytes": 1538011
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r1\\13Fリスト.dwg",
+          "bytes": 90853
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "2_dwg_r2",
+      "size": 2,
+      "mode": "dwg",
+      "repetition": 2,
+      "seconds": 1.9106797000276856,
+      "stages": {
+        "read_workbook": 0.01583099999697879,
+        "apply_submission_highlighting": 4.299974534660578e-06,
+        "render_dxf": 0.7616091000381857,
+        "convert_dxf_to_dwg": 1.1305931999813765
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 2,
+        "convert_dxf_to_dwg": 2
+      },
+      "rows": 380,
+      "files": [
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_dwg_r2\\2Fリスト.dwg",
+          "bytes": 76932
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_dwg_r2\\3Fリスト.dwg",
+          "bytes": 90848
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "2_pdf_dwg_r2",
+      "size": 2,
+      "mode": "pdf_dwg",
+      "repetition": 2,
+      "seconds": 12.174510299984831,
+      "stages": {
+        "read_workbook": 0.017976000031922013,
+        "apply_submission_highlighting": 5.099980626255274e-06,
+        "render_dxf": 0.9762111000018194,
+        "render_cad_pdf": 9.765743299969472,
+        "convert_dxf_to_dwg": 1.4111311999731697
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 2,
+        "render_cad_pdf": 2,
+        "convert_dxf_to_dwg": 2
+      },
+      "rows": 380,
+      "files": [
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r2\\2Fリスト.dwg",
+          "bytes": 76932
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r2\\2Fリスト.pdf",
+          "bytes": 1194482
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r2\\3Fリスト.dwg",
+          "bytes": 90848
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r2\\3Fリスト.pdf",
+          "bytes": 1536991
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "2_pdf_r2",
+      "size": 2,
+      "mode": "pdf",
+      "repetition": 2,
+      "seconds": 10.77860940003302,
+      "stages": {
+        "read_workbook": 0.016832199995405972,
+        "apply_submission_highlighting": 6.099988240748644e-06,
+        "render_dxf": 0.9192989000002854,
+        "render_cad_pdf": 9.837485999974888
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 2,
+        "render_cad_pdf": 2
+      },
+      "rows": 380,
+      "files": [
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_r2\\2Fリスト.pdf",
+          "bytes": 1194482
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_r2\\3Fリスト.pdf",
+          "bytes": 1536991
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "12_dwg_r2",
+      "size": 12,
+      "mode": "dwg",
+      "repetition": 2,
+      "seconds": 11.397044400044251,
+      "stages": {
+        "read_workbook": 0.06865919998381287,
+        "apply_submission_highlighting": 5.399982910603285e-06,
+        "render_dxf": 3.7586363999871537,
+        "convert_dxf_to_dwg": 7.560781399952248
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 12,
+        "convert_dxf_to_dwg": 12
+      },
+      "rows": 2280,
+      "files": [
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r2\\2Fリスト.dwg",
+          "bytes": 76932
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r2\\3Fリスト.dwg",
+          "bytes": 90848
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r2\\4Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r2\\5Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r2\\6Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r2\\7Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r2\\8Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r2\\9Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r2\\10Fリスト.dwg",
+          "bytes": 76937
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r2\\11Fリスト.dwg",
+          "bytes": 90853
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r2\\12Fリスト.dwg",
+          "bytes": 76937
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r2\\13Fリスト.dwg",
+          "bytes": 90853
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "12_pdf_dwg_r2",
+      "size": 12,
+      "mode": "pdf_dwg",
+      "repetition": 2,
+      "seconds": 87.60685380001087,
+      "stages": {
+        "read_workbook": 0.07864889997290447,
+        "apply_submission_highlighting": 5.099980626255274e-06,
+        "render_dxf": 4.497807900013868,
+        "render_cad_pdf": 74.82416620000731,
+        "convert_dxf_to_dwg": 8.196825300168712
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 12,
+        "render_cad_pdf": 12,
+        "convert_dxf_to_dwg": 12
+      },
+      "rows": 2280,
+      "files": [
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\2Fリスト.pdf",
+          "bytes": 1194482
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\2Fリスト.dwg",
+          "bytes": 76932
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\3Fリスト.pdf",
+          "bytes": 1536991
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\3Fリスト.dwg",
+          "bytes": 90848
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\4Fリスト.pdf",
+          "bytes": 1194869
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\4Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\5Fリスト.pdf",
+          "bytes": 1537707
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\5Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\6Fリスト.pdf",
+          "bytes": 1195585
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\6Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\7Fリスト.pdf",
+          "bytes": 1537290
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\7Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\8Fリスト.pdf",
+          "bytes": 1196388
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\8Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\9Fリスト.pdf",
+          "bytes": 1538255
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\9Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\10Fリスト.pdf",
+          "bytes": 1195078
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\10Fリスト.dwg",
+          "bytes": 76937
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\11Fリスト.pdf",
+          "bytes": 1537218
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\11Fリスト.dwg",
+          "bytes": 90853
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\12Fリスト.pdf",
+          "bytes": 1195537
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\12Fリスト.dwg",
+          "bytes": 76937
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\13Fリスト.pdf",
+          "bytes": 1538011
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r2\\13Fリスト.dwg",
+          "bytes": 90853
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "12_pdf_r2",
+      "size": 12,
+      "mode": "pdf",
+      "repetition": 2,
+      "seconds": 79.26056490000337,
+      "stages": {
+        "read_workbook": 0.07047730003250763,
+        "apply_submission_highlighting": 5.799985956400633e-06,
+        "render_dxf": 4.414375899999868,
+        "render_cad_pdf": 74.76017940015299
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 12,
+        "render_cad_pdf": 12
+      },
+      "rows": 2280,
+      "files": [
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r2\\2Fリスト.pdf",
+          "bytes": 1194482
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r2\\3Fリスト.pdf",
+          "bytes": 1536991
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r2\\4Fリスト.pdf",
+          "bytes": 1194869
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r2\\5Fリスト.pdf",
+          "bytes": 1537707
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r2\\6Fリスト.pdf",
+          "bytes": 1195585
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r2\\7Fリスト.pdf",
+          "bytes": 1537290
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r2\\8Fリスト.pdf",
+          "bytes": 1196388
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r2\\9Fリスト.pdf",
+          "bytes": 1538255
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r2\\10Fリスト.pdf",
+          "bytes": 1195078
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r2\\11Fリスト.pdf",
+          "bytes": 1537218
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r2\\12Fリスト.pdf",
+          "bytes": 1195537
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r2\\13Fリスト.pdf",
+          "bytes": 1538011
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "2_pdf_dwg_r3",
+      "size": 2,
+      "mode": "pdf_dwg",
+      "repetition": 3,
+      "seconds": 12.274370300001465,
+      "stages": {
+        "read_workbook": 0.018945600022561848,
+        "apply_submission_highlighting": 6.399990525096655e-06,
+        "render_dxf": 1.0034615999902599,
+        "render_cad_pdf": 9.824682999984361,
+        "convert_dxf_to_dwg": 1.424263900029473
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 2,
+        "render_cad_pdf": 2,
+        "convert_dxf_to_dwg": 2
+      },
+      "rows": 380,
+      "files": [
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r3\\2Fリスト.dwg",
+          "bytes": 76932
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r3\\2Fリスト.pdf",
+          "bytes": 1194482
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r3\\3Fリスト.dwg",
+          "bytes": 90848
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_dwg_r3\\3Fリスト.pdf",
+          "bytes": 1536991
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "2_pdf_r3",
+      "size": 2,
+      "mode": "pdf",
+      "repetition": 3,
+      "seconds": 10.819624099996872,
+      "stages": {
+        "read_workbook": 0.01573159999679774,
+        "apply_submission_highlighting": 3.4999684430658817e-06,
+        "render_dxf": 0.9169578999863006,
+        "render_cad_pdf": 9.882276999996975
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 2,
+        "render_cad_pdf": 2
+      },
+      "rows": 380,
+      "files": [
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_r3\\2Fリスト.pdf",
+          "bytes": 1194482
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_pdf_r3\\3Fリスト.pdf",
+          "bytes": 1536991
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "2_dwg_r3",
+      "size": 2,
+      "mode": "dwg",
+      "repetition": 3,
+      "seconds": 1.903619599994272,
+      "stages": {
+        "read_workbook": 0.017691199958790094,
+        "apply_submission_highlighting": 6.099988240748644e-06,
+        "render_dxf": 0.7527167000225745,
+        "convert_dxf_to_dwg": 1.1303678000112996
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 2,
+        "convert_dxf_to_dwg": 2
+      },
+      "rows": 380,
+      "files": [
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_dwg_r3\\2Fリスト.dwg",
+          "bytes": 76932
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\2_dwg_r3\\3Fリスト.dwg",
+          "bytes": 90848
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "12_pdf_dwg_r3",
+      "size": 12,
+      "mode": "pdf_dwg",
+      "repetition": 3,
+      "seconds": 87.116010800004,
+      "stages": {
+        "read_workbook": 0.07873619999736547,
+        "apply_submission_highlighting": 6.499991286545992e-06,
+        "render_dxf": 4.502333699958399,
+        "render_cad_pdf": 74.37134800001513,
+        "convert_dxf_to_dwg": 8.154212400026154
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 12,
+        "render_cad_pdf": 12,
+        "convert_dxf_to_dwg": 12
+      },
+      "rows": 2280,
+      "files": [
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\2Fリスト.dwg",
+          "bytes": 76932
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\2Fリスト.pdf",
+          "bytes": 1194482
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\3Fリスト.dwg",
+          "bytes": 90848
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\3Fリスト.pdf",
+          "bytes": 1536991
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\4Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\4Fリスト.pdf",
+          "bytes": 1194869
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\5Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\5Fリスト.pdf",
+          "bytes": 1537707
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\6Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\6Fリスト.pdf",
+          "bytes": 1195585
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\7Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\7Fリスト.pdf",
+          "bytes": 1537290
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\8Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\8Fリスト.pdf",
+          "bytes": 1196388
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\9Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\9Fリスト.pdf",
+          "bytes": 1538255
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\10Fリスト.dwg",
+          "bytes": 76937
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\10Fリスト.pdf",
+          "bytes": 1195078
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\11Fリスト.dwg",
+          "bytes": 90853
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\11Fリスト.pdf",
+          "bytes": 1537218
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\12Fリスト.dwg",
+          "bytes": 76937
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\12Fリスト.pdf",
+          "bytes": 1195537
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\13Fリスト.dwg",
+          "bytes": 90853
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_dwg_r3\\13Fリスト.pdf",
+          "bytes": 1538011
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "12_pdf_r3",
+      "size": 12,
+      "mode": "pdf",
+      "repetition": 3,
+      "seconds": 78.93822450004518,
+      "stages": {
+        "read_workbook": 0.06906359997810796,
+        "apply_submission_highlighting": 5.699985194951296e-06,
+        "render_dxf": 4.3901572998729534,
+        "render_cad_pdf": 74.4617992999847
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 12,
+        "render_cad_pdf": 12
+      },
+      "rows": 2280,
+      "files": [
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r3\\2Fリスト.pdf",
+          "bytes": 1194482
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r3\\3Fリスト.pdf",
+          "bytes": 1536991
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r3\\4Fリスト.pdf",
+          "bytes": 1194869
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r3\\5Fリスト.pdf",
+          "bytes": 1537707
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r3\\6Fリスト.pdf",
+          "bytes": 1195585
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r3\\7Fリスト.pdf",
+          "bytes": 1537290
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r3\\8Fリスト.pdf",
+          "bytes": 1196388
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r3\\9Fリスト.pdf",
+          "bytes": 1538255
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r3\\10Fリスト.pdf",
+          "bytes": 1195078
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r3\\11Fリスト.pdf",
+          "bytes": 1537218
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r3\\12Fリスト.pdf",
+          "bytes": 1195537
+        },
+        {
+          "format": "pdf",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_pdf_r3\\13Fリスト.pdf",
+          "bytes": 1538011
+        }
+      ],
+      "validated": true
+    },
+    {
+      "run_id": "12_dwg_r3",
+      "size": 12,
+      "mode": "dwg",
+      "repetition": 3,
+      "seconds": 11.572052799980156,
+      "stages": {
+        "read_workbook": 0.0694567000027746,
+        "apply_submission_highlighting": 7.90000194683671e-06,
+        "render_dxf": 3.829490899981465,
+        "convert_dxf_to_dwg": 7.664406300114933
+      },
+      "calls": {
+        "read_workbook": 1,
+        "apply_submission_highlighting": 1,
+        "render_dxf": 12,
+        "convert_dxf_to_dwg": 12
+      },
+      "rows": 2280,
+      "files": [
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r3\\2Fリスト.dwg",
+          "bytes": 76932
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r3\\3Fリスト.dwg",
+          "bytes": 90848
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r3\\4Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r3\\5Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r3\\6Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r3\\7Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r3\\8Fリスト.dwg",
+          "bytes": 76936
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r3\\9Fリスト.dwg",
+          "bytes": 90852
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r3\\10Fリスト.dwg",
+          "bytes": 76937
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r3\\11Fリスト.dwg",
+          "bytes": 90853
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r3\\12Fリスト.dwg",
+          "bytes": 76937
+        },
+        {
+          "format": "dwg",
+          "path": "C:\\Users\\62301\\Desktop\\部材リスト\\tmp\\benchmark_20260904\\runs\\12_dwg_r3\\13Fリスト.dwg",
+          "bytes": 90853
+        }
+      ],
+      "validated": true
+    }
+  ]
+}

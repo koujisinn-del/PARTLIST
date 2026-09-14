@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "symbols": [
+    {"material": "SS400", "aliases": [], "prefix": "", "inner": "", "shape": "none"},
+    {"material": "STK400", "aliases": [], "prefix": "", "inner": "", "shape": "none"},
+    {"material": "SM490A", "aliases": [], "prefix": "", "inner": "", "shape": "circle"},
+    {"material": "STKR490", "aliases": [], "prefix": "", "inner": "", "shape": "circle"},
+    {"material": "BCR295", "aliases": [], "prefix": "R", "inner": "", "shape": "square"},
+    {"material": "SN400B", "aliases": [], "prefix": "N", "inner": "B", "shape": "square"},
+    {"material": "SN490B", "aliases": [], "prefix": "N", "inner": "B", "shape": "circle"},
+    {"material": "SN490C", "aliases": [], "prefix": "N", "inner": "C", "shape": "circle"},
+    {"material": "TMCP325B", "aliases": [], "prefix": "T", "inner": "B", "shape": "circle"},
+    {"material": "TMCP325C", "aliases": [], "prefix": "T", "inner": "C", "shape": "circle"},
+    {"material": "TMCP385B", "aliases": [], "prefix": "T", "inner": "B", "shape": "square"},
+    {"material": "TMCP385C", "aliases": [], "prefix": "T", "inner": "C", "shape": "square"},
+    {"material": "BCP325B", "aliases": [], "prefix": "P", "inner": "B", "shape": "circle"},
+    {"material": "BCP325C", "aliases": [], "prefix": "P", "inner": "C", "shape": "circle"},
+    {"material": "BCP385B", "aliases": [], "prefix": "P", "inner": "B", "shape": "square"},
+    {"material": "BCP385C", "aliases": [], "prefix": "P", "inner": "C", "shape": "square"}
+  ]
+}
