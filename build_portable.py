@@ -25,7 +25,7 @@ PACKAGES = (
     {
         "name": "部材表图纸生成器_中文版",
         "folder": "中文版",
-        "launcher": "launcher_zh.pyw",
+        "launcher": "app_launcher.pyw",
         "guide": ROOT / "docs" / "使用说明_中文版.txt",
     },
     {

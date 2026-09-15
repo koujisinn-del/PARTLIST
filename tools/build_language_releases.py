@@ -22,12 +22,12 @@ def build(language, stamp):
     staging_root.mkdir(parents=True, exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix=language + "_", dir=staging_root)) / name
     stage.mkdir()
-    for filename in ("main.py", "setup_source.py", "requirements.txt", "安装开发环境.cmd", "启动部材表生成器.cmd", "README.md", "项目开发记录.md"):
+    for filename in ("main.py", "setup_source.py", "requirements.txt", "README.md", "项目开发记录.md"):
         shutil.copy2(ROOT / filename, stage / filename)
-    shutil.copy2(ROOT / f"launcher_{language}.pyw", stage / "app_launcher.pyw")
-    if language == "ja":
-        shutil.copy2(ROOT / "启动部材表生成器.cmd", stage / "起動.cmd")
-        shutil.copy2(ROOT / "安装开发环境.cmd", stage / "環境セットアップ.cmd")
+    launcher = "app_launcher.pyw" if language == "zh" else "launcher_ja.pyw"
+    command = "启动部材表生成器.cmd" if language == "zh" else "起動.cmd"
+    shutil.copy2(ROOT / launcher, stage / launcher)
+    shutil.copy2(ROOT / command, stage / command)
     for folder, extensions in (("material_drawing_generator", {".py"}), ("site_templates", {".json"}), ("material_libraries", {".json", ".md"})):
         for source in sorted((ROOT / folder).iterdir()):
             if not source.is_file() or source.suffix not in extensions:
@@ -43,8 +43,8 @@ def build(language, stamp):
     shutil.copytree(ROOT / converter, stage / converter)
     note = (
         f"中文版源码运行包（{stamp}）\n请先完整解压，不要在 ZIP 中直接启动。\n"
-        "使用已有的 Python 3.12 64 位（含 tkinter），先运行安装开发环境.cmd，再运行启动部材表生成器.cmd。\n"
-        "安装脚本仅在解压目录建立 .venv 并安装 requirements.txt 依赖，不安装 Python、不要求管理员权限；安装依赖需要可用软件源。\n"
+        "使用已有的 Python 3.12 64 位（含 tkinter），只需双击启动部材表生成器.cmd。\n"
+        "启动时会检查环境，并在解压目录建立 .venv、安装 requirements.txt 依赖；不安装 Python、不要求管理员权限，安装依赖需要可用软件源。\n"
         "已配好环境时，可使用该 Python 直接运行 main.py --lang zh。更新请解压到新目录，不要覆盖旧包。\n"
         "生成器未打成 EXE。libredwg 文件夹是 DWG 读写所需的第三方原生依赖，不是生成器程序；使用须符合公司要求。\n"
         "不附测试 Excel、图框或历史输出，请选择自己的文件。\n"
@@ -55,8 +55,8 @@ def build(language, stamp):
         "首选配置与现场模板沿用当前 Windows 用户的 LOCALAPPDATA/MaterialDrawingGenerator，不包含开发机个人设置。\n"
         if language == "zh" else
         f"日本語ソース実行パッケージ（{stamp}）\nZIP をすべて展開してから起動してください。\n"
-        "既存の Python 3.12 64 ビット（tkinter を含む）を使用し、環境セットアップ.cmd、起動.cmd の順に実行してください。\n"
-        "セットアップは展開先の .venv に requirements.txt の依存ライブラリを導入します。Python 本体のインストールや管理者権限は不要です。利用可能なパッケージ取得先が必要です。\n"
+        "既存の Python 3.12 64 ビット（tkinter を含む）を使用し、起動.cmd をダブルクリックするだけです。\n"
+        "起動時に環境を確認し、展開先の .venv に requirements.txt の依存ライブラリを導入します。Python 本体のインストールや管理者権限は不要です。利用可能なパッケージ取得先が必要です。\n"
         "環境が準備済みの場合は、その Python で main.py --lang ja を実行できます。更新時は旧パッケージを上書きせず、新しいフォルダーに展開してください。\n"
         "生成ツール自体は EXE 化していません。libredwg は DWG 入出力に必要な第三者製ネイティブ依存プログラムです。社内規則に従って使用してください。\n"
         "テスト用 Excel、図枠、過去の出力は同梱していません。ご自身のファイルを選択してください。\n"

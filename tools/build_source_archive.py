@@ -24,9 +24,9 @@ def main():
     stage.mkdir(parents=True)
     entries = {}
     root_names = (
-        "main.py", "app_launcher.pyw", "launcher_zh.pyw", "launcher_ja.pyw", "setup_source.py", "material_trial.pyw", "启动材质符号试验版.cmd",
+        "main.py", "app_launcher.pyw", "launcher_ja.pyw", "setup_source.py", "启动部材表生成器.cmd", "起動.cmd",
         "requirements.txt", "README.md", "项目开发记录.md", "公司电脑源码运行说明.md",
-        "安装开发环境.cmd", "启动部材表生成器.cmd", "テスト用部材データ.xlsx", "テスト用部材データ0904.xlsx",
+        "テスト用部材データ.xlsx", "テスト用部材データ0904.xlsx",
         "図面テンプレート.dwg", "図面テンプレート_テキスト枠.dwg",
     )
     for name in root_names:
