@@ -116,18 +116,34 @@ def write_compatibility_dxf(source_path: Path, target_path: Path) -> None:
     normal = target.rootdict["ACAD_PLOTSTYLENAME"]["Normal"].dxf.handle
     for layer in target.layers:
         layer.dxf.plotstyle_handle = normal
-    if _entity_snapshot(source) != _entity_snapshot(target):
-        raise ValueError("DWG 兼容转换前的文字/图元对账不一致，已停止输出。")
+    source_snapshot = _entity_snapshot(source)
+    imported_snapshot = _entity_snapshot(target)
+    if source_snapshot != imported_snapshot:
+        missing = list((source_snapshot - imported_snapshot).items())[:3]
+        extra = list((imported_snapshot - source_snapshot).items())[:3]
+        raise ValueError(
+            "DWG 兼容转换前的文字/图元对账不一致，已保留 DXF，未交付损坏的 DWG。"
+            f"缺失示例：{missing}；多余示例：{extra}"
+        )
     _preserve_text_alignment(target)
     reset_model_view(target)
 
     # ezdxf creates post-R2000 defaults even in R2000 drawings. Exclude only
     # these non-graphical dictionaries/objects from the interchange stream.
+    unsupported_objects = {
+        "MATERIAL", "MLEADERSTYLE", "VISUALSTYLE", "ACDBSECTIONVIEWSTYLE",
+        "ACDBDETAILVIEWSTYLE", "FIELD", "FIELDLIST", "SUN",
+        "RASTERVARIABLES",
+    }
     removed = {
         e.dxf.handle for e in target.objects
-        if e.dxftype() in {"MATERIAL", "MLEADERSTYLE", "VISUALSTYLE"}
+        if e.dxftype() in unsupported_objects
     }
-    for name in ("ACAD_MATERIAL", "ACAD_MLEADERSTYLE", "ACAD_VISUALSTYLE"):
+    for name in (
+        "ACAD_MATERIAL", "ACAD_MLEADERSTYLE", "ACAD_VISUALSTYLE",
+        "ACAD_SECTIONVIEWSTYLE", "ACAD_DETAILVIEWSTYLE", "ACAD_FIELDLIST",
+        "ACAD_SUN", "ACAD_RASTERVARIABLES",
+    ):
         if name in target.rootdict:
             removed.add(target.rootdict[name].dxf.handle)
 
@@ -160,7 +176,7 @@ def write_compatibility_dxf(source_path: Path, target_path: Path) -> None:
         if any(t.code in (5, 105) and t.value in removed for t in record):
             continue
         if record[0].value == "CLASS" and any(
-            t.value in {"MATERIAL", "MLEADERSTYLE", "VISUALSTYLE"} for t in record
+            t.value in unsupported_objects for t in record
         ):
             continue
         kept = []

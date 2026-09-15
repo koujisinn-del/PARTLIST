@@ -17,7 +17,7 @@
     "position": ["部位", "位置", "箇所", "区分"],
     "section": ["断面", "断面尺寸", "断面寸法", "断面サイズ", "サイズ"],
     "material": ["材质", "材質", "材料"],
-    "joint": ["接合符号", "接合記号", "継手符号", "継手記号", "接头符号"],
+    "joint": ["継手", "接合符号", "接合記号", "継手符号", "継手記号", "接头符号"],
     "remarks": ["备注", "備考", "注记", "注記"]
   },
   "category_order": ["大梁", "小梁"],
@@ -77,8 +77,8 @@
         {"field": "position", "label": "部位", "width": 18.0},
         {"field": "section", "label": "断面", "width": 56.0},
         {"field": "material", "label": "材质", "width": 24.0},
-        {"field": "joint", "label": "接合", "width": 24.0},
-        {"field": "remarks", "label": "备注", "width": 26.0}
+        {"field": "joint", "label": "継手", "width": 24.0},
+        {"field": "remarks", "label": "備考", "width": 26.0}
       ]
     },
     {
@@ -97,7 +97,7 @@
         {"field": "position", "label": "部位", "width": 17.0},
         {"field": "section", "label": "断面", "width": 34.0},
         {"field": "material", "label": "材质", "width": 16.0},
-        {"field": "joint", "label": "接合", "width": 15.0}
+        {"field": "joint", "label": "継手", "width": 15.0}
       ]
     }
   ],

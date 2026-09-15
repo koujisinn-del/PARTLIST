@@ -1,6 +1,7 @@
 """Vector CAD geometry with embedded, selectable PDF text (never text outlines)."""
 from __future__ import annotations
 
+from collections import Counter
 from functools import lru_cache
 from pathlib import Path
 
@@ -49,11 +50,12 @@ class TextBackend(Backend):
         super().__init__()
         self.canvas = canvas
         self.text_count = 0
+        self.drawn_texts = Counter()
 
     def _style(self, properties):
         self.canvas.setStrokeColorRGB(0, 0, 0)
         self.canvas.setFillColorRGB(0, 0, 0)
-        self.canvas.setLineWidth(max(0.06, properties.lineweight))
+        self.canvas.setLineWidth(max(0.05, properties.lineweight * 0.70))
 
     def set_background(self, color):
         pass  # The page is opaque white.
@@ -123,6 +125,7 @@ class TextBackend(Backend):
         c.drawString(0, -baseline * cap_height, text)
         c.restoreState()
         self.text_count += 1
+        self.drawn_texts[text] += 1
 
 
 class TextPipeline(RenderPipeline2d):
@@ -145,7 +148,7 @@ class TextPdfBook:
         self.canvas.setTitle(path.stem)
         self.page_names = []
 
-    def add_cad_page(self, document, name: str):
+    def add_cad_page(self, document, name: str, expected_sections=None):
         # The rendering machine's embeddable CJK font must not overwrite the
         # original CAD font definitions. Work on a detached copy only.
         import copy
@@ -162,6 +165,11 @@ class TextPdfBook:
             Configuration(color_policy=ColorPolicy.BLACK, background_policy=BackgroundPolicy.WHITE),
         )
         frontend.draw_layout(document.modelspace(), finalize=True)
+        if expected_sections:
+            missing = Counter(expected_sections) - backend.drawn_texts
+            if missing:
+                sample = ", ".join(f"{value} × {count}" for value, count in list(missing.items())[:5])
+                raise ValueError(f"PDF 图纸“{name}”的断面文字未完整绘制：{sample}")
         c.restoreState()
         c.showPage()
         self.page_names.append(name)

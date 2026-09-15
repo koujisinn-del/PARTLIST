@@ -198,7 +198,15 @@ def _generate_files(excel_path, output_root, template, requested, workbook, high
             sheet_result.output_rows = cad_rows
             if book is not None:
                 from .drawing import _load_ezdxf
-                book.add_cad_page(_load_ezdxf().readfile(dxf_path), sheet.name)
+                from .drawing import _safe_drawing_text
+                expected_sections = [
+                    _safe_drawing_text(row.section)
+                    for row in sheet.source_rows if _safe_drawing_text(row.section)
+                ]
+                book.add_cad_page(
+                    _load_ezdxf().readfile(dxf_path), sheet.name,
+                    expected_sections=expected_sections,
+                )
                 sheet_result.files["pdf"] = str(combined_path)
                 sheet_result.pdf_page = len(book.page_names)
             if "dxf" in requested:

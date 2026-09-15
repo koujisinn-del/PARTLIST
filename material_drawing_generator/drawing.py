@@ -82,8 +82,12 @@ def _format_drawing_date(value: Any) -> str:
 
 def _cjk_font_filename() -> str:
     candidates = (
-        Path("C:/Windows/Fonts/msyh.ttc"),
+        # Noto Sans SC covers both enclosed Latin marks (for example 🄱) and
+        # the simplified/traditional Han characters in both language modes.
+        # Yu Gothic is the next choice on Japanese Windows; YaHei lacks 🄱.
+        Path("C:/Windows/Fonts/NotoSansSC-VF.ttf"),
         Path("C:/Windows/Fonts/YuGothM.ttc"),
+        Path("C:/Windows/Fonts/msyh.ttc"),
         Path("C:/Windows/Fonts/meiryo.ttc"),
     )
     return next((path.name for path in candidates if path.exists()), "meiryo.ttc")
@@ -151,12 +155,12 @@ class PdfAdapter:
 
     def line(self, x1, y1, x2, y2, layer, width=0.25):
         self.canvas.setStrokeColorRGB(0, 0, 0)
-        self.canvas.setLineWidth(width * self.mm)
+        self.canvas.setLineWidth(max(0.06, width * 0.65) * self.mm)
         self.canvas.line(x1 * self.mm, y1 * self.mm, x2 * self.mm, y2 * self.mm)
 
     def rect(self, x1, y1, x2, y2, layer, width=0.25):
         self.canvas.setStrokeColorRGB(0, 0, 0)
-        self.canvas.setLineWidth(width * self.mm)
+        self.canvas.setLineWidth(max(0.06, width * 0.65) * self.mm)
         self.canvas.rect(
             x1 * self.mm,
             y1 * self.mm,
@@ -168,7 +172,7 @@ class PdfAdapter:
 
     def circle(self, x, y, radius, layer, width=0.25):
         self.canvas.setStrokeColorRGB(0, 0, 0)
-        self.canvas.setLineWidth(width * self.mm)
+        self.canvas.setLineWidth(max(0.06, width * 0.65) * self.mm)
         self.canvas.circle(x * self.mm, y * self.mm, radius * self.mm, stroke=1, fill=0)
 
     def text_box(
@@ -299,7 +303,10 @@ def _normalize_external_frame(document, width_mm: float, height_mm: float) -> bo
 
 def _apply_pdf_font_to_styles(document, font_filename: str) -> None:
     """Local rendering fallback, for a PDF-only document copy, never CAD output."""
-    family = {"msyh.ttc": "Microsoft YaHei", "meiryo.ttc": "Meiryo", "yugothm.ttc": "Yu Gothic"}.get(font_filename.lower(), "")
+    family = {
+        "notosanssc-vf.ttf": "Noto Sans SC", "msyh.ttc": "Microsoft YaHei",
+        "meiryo.ttc": "Meiryo", "yugothm.ttc": "Yu Gothic",
+    }.get(font_filename.lower(), "")
     for style in document.styles:
         style.dxf.font = font_filename
         style.dxf.bigfont = ""
@@ -368,14 +375,20 @@ class CadAdapter:
         style.dxf.flags = 0
         style.dxf.oblique = 0
         style.dxf.generation_flags = 0
-        family = {"msyh.ttc": "Microsoft YaHei", "yugothm.ttc": "Yu Gothic", "meiryo.ttc": "Meiryo"}[style.dxf.font.lower()]
+        family = {
+            "notosanssc-vf.ttf": "Noto Sans SC", "msyh.ttc": "Microsoft YaHei",
+            "yugothm.ttc": "Yu Gothic", "meiryo.ttc": "Meiryo",
+        }[style.dxf.font.lower()]
         style.set_xdata("ACAD", [(1000, family), (1071, 0)])
 
     def line(self, x1, y1, x2, y2, layer, width=0.25):
+        from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHTS
+        requested = max(9, round(width * 65))
+        lineweight = min(VALID_DXF_LINEWEIGHTS, key=lambda value: abs(value - requested))
         self.modelspace.add_line(
             (float(x1), float(y1)),
             (float(x2), float(y2)),
-            dxfattribs={"layer": layer},
+            dxfattribs={"layer": layer, "lineweight": lineweight},
         )
 
     def rect(self, x1, y1, x2, y2, layer, width=0.25):
@@ -842,11 +855,11 @@ def _draw_table(
         0.65,
         "left",
     )
-    adapter.rect(x, bottom, x + total_width, top, layer, 0.35)
+    adapter.rect(x, bottom, x + total_width, top, layer, 0.20)
     header_bottom = top - header_height
-    adapter.line(x, header_bottom, x + total_width, header_bottom, layer, 0.35)
+    adapter.line(x, header_bottom, x + total_width, header_bottom, layer, 0.20)
     for boundary in x_positions[1:-1]:
-        adapter.line(boundary, bottom, boundary, top, layer, 0.22)
+        adapter.line(boundary, bottom, boundary, top, layer, 0.13)
     for index, column in enumerate(columns):
         adapter.text_box(
             x_positions[index],
@@ -860,7 +873,7 @@ def _draw_table(
         )
 
     if not groups:
-        adapter.line(x, bottom, x + total_width, bottom, layer, 0.22)
+        adapter.line(x, bottom, x + total_width, bottom, layer, 0.12)
         return 0
 
     current_top = header_bottom
@@ -902,9 +915,9 @@ def _draw_table(
                 )
                 adapter.center_position_ink = False
             if row_index < len(group.rows) - 1:
-                adapter.line(x_positions[1], row_bottom, x + total_width, row_bottom, layer, 0.16)
+                adapter.line(x_positions[1], row_bottom, x + total_width, row_bottom, layer, 0.09)
             rendered_rows += 1
-        adapter.line(x, group_bottom, x + total_width, group_bottom, layer, 0.28)
+        adapter.line(x, group_bottom, x + total_width, group_bottom, layer, 0.14)
         current_top = group_bottom
     return rendered_rows
 
@@ -952,8 +965,15 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
     weights = []
     for table in tables:
         groups = sheet.groups_for_category(table["category"])
+        # Material is source data for a mark in front of the section, never an
+        # extra printed column. This also applies when the mark feature is off.
+        table["columns"] = [c for c in table["columns"] if c["field"] != "material"]
+        for column in table["columns"]:
+            if column["field"] == "joint":
+                column["label"] = "継手"
+            elif column["field"] == "remarks":
+                column["label"] = "備考"
         if material_plan is not None:
-            table["columns"] = [c for c in table["columns"] if c["field"] != "material"]
             if not any(c["field"] == "section" for c in table["columns"]):
                 raise DrawingError(f"{table['title']} 缺少断面列，不能插入材质记号。")
         table["row_height"] = table["header_height"] = table["min_row_height"] = fixed_unit

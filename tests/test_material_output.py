@@ -15,7 +15,9 @@ from material_drawing_generator.materials import MaterialLibrary, SymbolRule
 from material_drawing_generator.material_drawing import prepare_material_job, validate_material_geometry, verify_material_cells, SymbolFactory
 from material_drawing_generator.drawing import _cjk_font_filename, _prepare_tables, render_dxf, DrawingMetadata, convert_dxf_to_dwg, _converter_root
 from material_drawing_generator.cad_integrity import write_compatibility_dxf, validate_roundtrip
-from material_drawing_generator.xlsx_reader import _read_sheet
+from material_drawing_generator.xlsx_reader import _read_sheet, read_workbook
+from material_drawing_generator.xlsx_reader import ExcelReadError
+from material_drawing_generator.text_pdf import TextPdfBook
 
 
 class MaterialOutputTests(unittest.TestCase):
@@ -117,6 +119,45 @@ class MaterialOutputTests(unittest.TestCase):
         columns = tables[0][0]["columns"]
         self.assertNotIn("material", {column["field"] for column in columns})
 
+    def test_material_is_never_an_extra_printed_column(self):
+        sheet, plan = self.data([SectionRow(2, "G1", "大梁", section="H-100", material="SS400")])
+        for active_plan in (None, plan):
+            with self.subTest(material_library=active_plan is not None):
+                columns = _prepare_tables(sheet, self.template(), active_plan)[0][0]["columns"]
+                fields = [column["field"] for column in columns]
+                self.assertIn("section", fields)
+                self.assertNotIn("material", fields)
+                labels = {column["field"]: column["label"] for column in columns}
+                self.assertEqual(labels["joint"], "継手")
+                self.assertEqual(labels["remarks"], "備考")
+
+    def test_unmapped_or_empty_section_column_is_rejected(self):
+        for rows in (
+            [(1, {0: "部件名称", 1: "种类", 2: "材质"}),
+             (2, {0: "G1", 1: "大梁", 2: "SS400"})],
+            [(1, {0: "部件名称", 1: "种类", 2: "断面", 3: "材质"}),
+             (2, {0: "G1", 1: "大梁", 3: "SS400"})],
+        ):
+            with self.subTest(rows=rows), self.assertRaisesRegex(ExcelReadError, "断面"):
+                _read_sheet("2F", rows, self.template(), False)
+
+    def test_pasted_material_column_can_be_before_or_after_section(self):
+        for section_column, material_column in ((3, 2), (2, 8)):
+            with self.subTest(material_column=material_column):
+                rows = [
+                    (1, {0: "部件名称", 1: "种类", section_column: "断面", material_column: "材质"}),
+                    (2, {0: "G1", 1: "大梁", section_column: "H-100", material_column: "SN400B"}),
+                ]
+                sheet = _read_sheet("2F", rows, self.template(), False)
+                self.assertEqual(sheet.source_rows[0].section, "H-100")
+                self.assertEqual(sheet.source_rows[0].material, "SN400B")
+
+    def test_pdf_rejects_missing_section_text(self):
+        with tempfile.TemporaryDirectory() as directory:
+            book = TextPdfBook(Path(directory) / "missing.pdf", 420, 297)
+            with self.assertRaisesRegex(ValueError, "断面文字未完整绘制"):
+                book.add_cad_page(ezdxf.new("R2000"), "2F", expected_sections=["H-100"])
+
     def test_repeated_material_uses_one_definition(self):
         rows = [SectionRow(i + 2, f"G{i}", "大梁", section="H-100", material="TMCP325B") for i in range(10)]
         sheet, plan = self.data(rows)
@@ -197,6 +238,48 @@ class MaterialOutputTests(unittest.TestCase):
             dest = Path(directory) / "symbols.dwg"
             convert_dxf_to_dwg(src, dest)
             self.assertGreater(dest.stat().st_size, 1000)
+
+    @unittest.skipUnless((_converter_root() / "dwgwrite.exe").exists() and (Path(__file__).resolve().parents[1] / "図面テンプレート.dwg").exists(), "DWG frame unavailable")
+    def test_material_symbol_with_frame_roundtrips_to_dwg(self):
+        frame = Path(__file__).resolve().parents[1] / "図面テンプレート.dwg"
+        sheet, plan = self.data([
+            SectionRow(2, "G1", "大梁", section="H-248X124X5X8", material="TMCP325B"),
+            SectionRow(3, "G2", "大梁", section="BH-1000X350X19X28", material="SN400B"),
+        ])
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source.dxf"
+            dest = Path(directory) / "source.dwg"
+            template = self.template().with_frame_dwg(frame)
+            render_dxf(source, sheet, template, DrawingMetadata(), plan)
+            convert_dxf_to_dwg(source, dest)
+            self.assertGreater(dest.stat().st_size, 1000)
+
+    @unittest.skipUnless((_converter_root() / "dwgwrite.exe").exists() and (Path(__file__).resolve().parents[1] / "図面テンプレート.dwg").exists(), "DWG frame unavailable")
+    def test_bundled_workbook_with_pasted_material_column_keeps_sections(self):
+        root = Path(__file__).resolve().parents[1]
+        source_workbook = root / "test_data" / "示例_图纸列表与2F部材表.xlsx"
+        if not source_workbook.exists():
+            self.skipTest("bundled workbook unavailable")
+        template = self.template().with_frame_dwg(root / "図面テンプレート.dwg")
+        workbook = read_workbook(source_workbook, template)
+        sheet = workbook.sheets[0]
+        grades = ("SS400", "SN400B", "TMCP325B", "SM490A")
+        for index, row in enumerate(sheet.source_rows):
+            row.material = grades[index % len(grades)]
+        _, plans = prepare_material_job(workbook, _cjk_font_filename())
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "2F.dxf"
+            pdf = Path(directory) / "2F.pdf"
+            dwg = Path(directory) / "2F.dwg"
+            render_dxf(source, sheet, template, DrawingMetadata(), plans[sheet.name])
+            drawing = ezdxf.readfile(source)
+            self.assertEqual(verify_material_cells(drawing, plans[sheet.name])["verified_rows"], len(sheet.source_rows))
+            book = TextPdfBook(pdf, 420, 297)
+            book.add_cad_page(drawing, sheet.name, expected_sections=[row.section.strip() for row in sheet.source_rows])
+            book.save()
+            convert_dxf_to_dwg(source, dwg)
+            self.assertTrue(pdf.is_file())
+            self.assertGreater(dwg.stat().st_size, 1000)
 
 
 if __name__ == "__main__":

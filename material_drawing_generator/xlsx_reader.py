@@ -557,6 +557,16 @@ def _read_sheet(
         normalized_headers,
         template.compound_headers,
     )
+    if "section" not in field_columns:
+        raise ExcelReadError(
+            f"工作表“{sheet_name}”已识别部件和种类，但没有识别到断面列；"
+            "请检查 Excel 断面表头或现场模板的列名别称，不能输出只有部件名称的图纸。"
+        )
+    if field_columns.get("material") == field_columns["section"]:
+        raise ExcelReadError(
+            f"工作表“{sheet_name}”的断面和材质被映射到同一列，"
+            "请分开这两列或修正合并表头配置。"
+        )
     member_column = field_columns["member_name"]
     category_column = field_columns["category"]
     data_rows = [(row_number, values) for row_number, values in rows if row_number > header_row]
@@ -620,6 +630,11 @@ def _read_sheet(
         raise ExcelReadError(f"工作表“{sheet_name}”数据校验失败：\n{sample}{suffix}")
     if not source_rows:
         warnings.append("没有可生成的部件数据。")
+    elif all(not source_text(row.section).strip() for row in source_rows):
+        raise ExcelReadError(
+            f"工作表“{sheet_name}”已识别断面列，但所有部件的断面内容都为空；"
+            "请检查 Excel 表头与数据列位置，避免生成空白断面图纸。"
+        )
     groups = group_section_rows(
         source_rows,
         category_order=template.category_order,

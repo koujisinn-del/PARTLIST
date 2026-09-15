@@ -178,9 +178,9 @@ class SymbolFactory:
         for text, x, y in geom.texts:
             block.add_text(text, dxfattribs={"insert": (x, y), "height": 1, "style": style, "layer": "0"})
         for x1, y1, x2, y2 in geom.lines:
-            block.add_line((x1, y1), (x2, y2), dxfattribs={"layer": "0"})
+            block.add_line((x1, y1), (x2, y2), dxfattribs={"layer": "0", "lineweight": 13})
         for x, y, radius in geom.circles:
-            block.add_circle((x, y), radius, dxfattribs={"layer": "0"})
+            block.add_circle((x, y), radius, dxfattribs={"layer": "0", "lineweight": 13})
         installed.add(name)
         return name
 
