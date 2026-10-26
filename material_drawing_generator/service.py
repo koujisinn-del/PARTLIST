@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import copy
 import tempfile
 from dataclasses import asdict, dataclass, field
 from datetime import date
@@ -24,6 +25,7 @@ from .text_pdf import TextPdfBook
 from .sheet_print import add_drawing_list_page
 from .runtime_paths import dwg_tools_available
 from .cad_output_scale import DEFAULT_CAD_OUTPUT_SCALE, scale_document, validate_cad_output_scale
+from .table_layout_policy import validate_auto_text_shrink_steps
 
 
 logger = get_logger()
@@ -49,6 +51,7 @@ class GeneratedSheet:
     files: dict[str, str] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     pdf_page: int | None = None
+    table_layout: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -100,11 +103,18 @@ def generate_drawings(
     revision_dates: list[str] | None = None,
     descending: bool = False,
     cad_output_scale: int | None = None,
+    auto_text_shrink_steps: int | None = None,
 ) -> GenerationResult:
     configured_cad_scale = template.data.get("cad_output_scale", DEFAULT_CAD_OUTPUT_SCALE)
     selected_cad_scale = validate_cad_output_scale(
         configured_cad_scale if cad_output_scale is None else cad_output_scale
     )
+    configured_shrink_steps = template.data.get("dynamic_table_layout", {}).get("auto_text_shrink_steps", 0)
+    selected_shrink_steps = validate_auto_text_shrink_steps(
+        configured_shrink_steps if auto_text_shrink_steps is None else auto_text_shrink_steps
+    )
+    template = SiteTemplate(template.path, copy.deepcopy(template.data))
+    template.data.setdefault("dynamic_table_layout", {})["auto_text_shrink_steps"] = selected_shrink_steps
     logger.info(
         "开始生成图纸：Excel=%s，模板=%s，格式=%s",
         Path(excel_path).resolve(),
@@ -127,9 +137,29 @@ def generate_drawings(
         _library, material_plans = prepare_material_job(workbook, _cjk_font_filename())
     # Validate every sheet's fixed-grid layout before the Excel marker is
     # applied or output files are staged, whether symbols are enabled or not.
+    table_layout_results = {}
     for sheet in workbook.sheets:
         plan = material_plans[sheet.name] if material_plans is not None else None
-        _prepare_tables(sheet, template, plan)
+        prepared = _prepare_tables(sheet, template, plan)
+        if prepared:
+            table_layout_results[sheet.name] = {
+                "requested_max_steps": selected_shrink_steps,
+                "actual_steps": prepared[0][0]["text_shrink_steps"],
+                "requested_text_height": prepared[0][0]["requested_text_height"],
+                "actual_text_height": prepared[0][0]["actual_text_height"],
+                "actual_row_height": prepared[0][0]["actual_row_height"],
+                "factor": prepared[0][0]["text_shrink_factor"],
+            }
+        else:
+            layout = template.data.get("dynamic_table_layout", {})
+            table_layout_results[sheet.name] = {
+                "requested_max_steps": selected_shrink_steps,
+                "actual_steps": 0,
+                "requested_text_height": float(layout.get("fixed_text_height", 1.0)),
+                "actual_text_height": float(layout.get("fixed_text_height", 1.0)),
+                "actual_row_height": float(layout.get("fixed_row_height", 2.5)),
+                "factor": 1.0,
+            }
     output_root = Path(output_directory).resolve()
     output_root.mkdir(parents=True, exist_ok=True)
     highlight_result = apply_submission_highlighting(excel_path, workbook.drawing_list)
@@ -138,13 +168,14 @@ def generate_drawings(
         return _generate_files(
             excel_path, output_root, template, requested, workbook, highlight_result,
             version, drawing_date, revision_dates, Path(staging), material_plans,
-            selected_cad_scale,
+            selected_cad_scale, table_layout_results,
         )
 
 
 def _generate_files(excel_path, output_root, template, requested, workbook, highlight_result,
                     version, drawing_date, revision_dates, staging, material_plans=None,
-                    cad_output_scale=DEFAULT_CAD_OUTPUT_SCALE) -> GenerationResult:
+                    cad_output_scale=DEFAULT_CAD_OUTPUT_SCALE, table_layout_results=None) -> GenerationResult:
+    table_layout_results = table_layout_results or {}
     material_reports = {}
     pending_publication = []
     combined_path = output_root / f"{safe_filename(Path(excel_path).stem)}_图纸.pdf"
@@ -192,7 +223,16 @@ def _generate_files(excel_path, output_root, template, requested, workbook, high
             version=metadata.version,
             drawing_date=metadata.drawing_date,
             warnings=list(sheet.warnings),
+            table_layout=copy.deepcopy(table_layout_results.get(sheet.name, {})),
         )
+        actual_shrink_steps = int(sheet_result.table_layout.get("actual_steps", 0))
+        if actual_shrink_steps:
+            factor = float(sheet_result.table_layout.get("factor", 1.0))
+            percentage = round(factor * 100)
+            sheet_result.warnings.append(
+                f"整表字号与行高统一缩小至原设置的 {percentage}%（第 {actual_shrink_steps} 档）。 / "
+                f"表全体の文字と行高を元設定の {percentage}% に縮小しました（第 {actual_shrink_steps} 段階）。"
+            )
         if highlight_result.message and not highlight_result.applied:
             sheet_result.warnings.append(highlight_result.message)
         paper_dxf = staging / f"{len(generated) + 1:04d}_{base_name}.paper.dxf"
@@ -304,6 +344,10 @@ def _generate_files(excel_path, output_root, template, requested, workbook, high
         "pdf_pages": book.page_names if book is not None else [],
         "material_symbols": material_reports,
         "cad_output_scale": cad_output_scale,
+        "table_layout_policy": {
+            "requested_max_steps": int(template.data.get("dynamic_table_layout", {}).get("auto_text_shrink_steps", 0)),
+            "sheets": table_layout_results,
+        },
     }
     report_path.write_text(
         json.dumps(report_payload, ensure_ascii=False, indent=2),

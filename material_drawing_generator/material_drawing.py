@@ -347,12 +347,16 @@ class SymbolFactory:
         installed.add(name)
         return name
 
-    def draw_cell(self, adapter, plan: SheetMaterials, row, x1, y1, x2, y2, size):
+    def draw_cell(self, adapter, plan: SheetMaterials, row, x1, y1, x2, y2, size, vertical_padding: float = 0.3):
         binding = plan.bindings[row.source_row]
         rule = binding.rule
         geom = self.geometry(rule)
         width = self.combined_width(rule, binding.section, size)
-        if width > x2 - x1 - 1.2 + 1e-5 or geom.height * size > y2 - y1 - 0.6 + 1e-5:
+        vertical_padding = float(vertical_padding)
+        if vertical_padding < 0 or not math.isfinite(vertical_padding):
+            raise ValueError("材质符号单元格上下留白必须是非负有限数值。")
+        vertical_clearance = vertical_padding * 2
+        if width > x2 - x1 - 1.2 + 1e-5 or geom.height * size > y2 - y1 - vertical_clearance + 1e-5:
             raise ValueError(f"{plan.name} 第 {row.source_row} 行：材质符号与断面无法放入单元格，请扩大整体行高或列宽。")
         left = (x1 + x2 - width) / 2
         center_y = (y1 + y2) / 2
@@ -373,7 +377,7 @@ class SymbolFactory:
             })
         entities = [entity] + ([insert] if insert is not None else [])
         limits = bbox.extents(entities)
-        available_y0, available_y1 = y1 + 0.3, y2 - 0.3
+        available_y0, available_y1 = y1 + vertical_padding, y2 - vertical_padding
         if limits.size.y > available_y1 - available_y0 + 1e-5:
             raise ValueError(
                 f"{plan.name} 第 {row.source_row} 行：材质符号与断面组合需要垂直空间 "

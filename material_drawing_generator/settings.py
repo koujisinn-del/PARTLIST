@@ -24,6 +24,7 @@ class UserSettings:
     preview_sheet: str = ""
     material_symbols: bool = False
     cad_output_scale: int = DEFAULT_CAD_OUTPUT_SCALE
+    auto_text_shrink_steps: int = 0
 
     @classmethod
     def path(cls) -> Path:

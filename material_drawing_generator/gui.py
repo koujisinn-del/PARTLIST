@@ -13,6 +13,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from .app_logging import get_logger, log_directory
 from .cad_output_scale import CAD_OUTPUT_SCALES, DEFAULT_CAD_OUTPUT_SCALE, validate_cad_output_scale
+from .table_layout_policy import AUTO_TEXT_SHRINK_STEPS, validate_auto_text_shrink_steps
 from .i18n import translator
 from .models import PreviewCellStyle, PreviewSheet, WorkbookPreview
 from .models import normalized_text
@@ -400,6 +401,13 @@ class MaterialDrawingApp:
             "cad_output_scale", self._current_template_data.get("cad_output_scale", self.settings.cad_output_scale)
         ) if record is not None else self.settings.cad_output_scale
         self.cad_output_scale_var = tk.StringVar(value=str(self._safe_cad_output_scale(stored_site_scale)))
+        stored_shrink_steps = record.get("ui", {}).get(
+            "auto_text_shrink_steps",
+            self._current_template_data.get("dynamic_table_layout", {}).get(
+                "auto_text_shrink_steps", self.settings.auto_text_shrink_steps
+            ),
+        ) if record is not None else self.settings.auto_text_shrink_steps
+        self.auto_text_shrink_var = tk.StringVar(value="0")
 
         self.excel_var = tk.StringVar(value=self.settings.excel_path)
         self.output_var = tk.StringVar(value=self.settings.output_path)
@@ -421,6 +429,7 @@ class MaterialDrawingApp:
         self.root.minsize(920, 700)
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
         self._build_ui()
+        self.auto_text_shrink_var.set(self._auto_text_shrink_label(self._safe_auto_text_shrink_steps(stored_shrink_steps)))
         logger.info("软件启动：language=%s", self.language)
 
     def _build_ui(self):
@@ -492,6 +501,17 @@ class MaterialDrawingApp:
         self.cad_output_scale_combo.bind("<<ComboboxSelected>>", lambda _event: self._save_settings())
         self.cad_output_scale_note = ttk.Label(settings_scale, text=self.tr("cad_output_scale_note"))
         self.cad_output_scale_note.pack(side="left", padx=(0, 6))
+        self.auto_text_shrink_label = ttk.Label(settings_scale, text=self.tr("auto_text_shrink_steps"))
+        self.auto_text_shrink_label.pack(side="left", padx=(10, 5))
+        self.auto_text_shrink_combo = ttk.Combobox(
+            settings_scale,
+            textvariable=self.auto_text_shrink_var,
+            values=tuple(self._auto_text_shrink_label(step) for step in AUTO_TEXT_SHRINK_STEPS),
+            state="readonly",
+            width=24,
+        )
+        self.auto_text_shrink_combo.pack(side="left")
+        self.auto_text_shrink_combo.bind("<<ComboboxSelected>>", lambda _event: self._save_settings())
 
         actions = ttk.Frame(main)
         actions.grid(row=7, column=0, columnspan=4, sticky="ew", pady=(2, 8))
@@ -548,6 +568,7 @@ class MaterialDrawingApp:
         )
         template.data.setdefault("material_symbols", {})["enabled"] = self.material_symbols_var.get()
         template.data["cad_output_scale"] = self._selected_cad_output_scale()
+        template.data.setdefault("dynamic_table_layout", {})["auto_text_shrink_steps"] = self._selected_auto_text_shrink_steps()
         frame_path = self.frame_dwg_var.get().strip()
         return template.with_frame_dwg(frame_path) if frame_path else template
 
@@ -561,6 +582,7 @@ class MaterialDrawingApp:
             "output_dwg": self.dwg_var.get(),
             "material_symbols": self.material_symbols_var.get(),
             "cad_output_scale": self._selected_cad_output_scale(),
+            "auto_text_shrink_steps": self._selected_auto_text_shrink_steps(),
         }
 
     @staticmethod
@@ -580,6 +602,25 @@ class MaterialDrawingApp:
             return validate_cad_output_scale(int(value))
         except ValueError as exc:
             raise ValueError(self.tr("invalid_cad_output_scale")) from exc
+
+    def _auto_text_shrink_label(self, steps: int) -> str:
+        return self.tr(f"auto_text_shrink_{steps}")
+
+    @staticmethod
+    def _safe_auto_text_shrink_steps(value) -> int:
+        try:
+            if isinstance(value, str) and value.strip().isdigit():
+                value = int(value.strip())
+            return validate_auto_text_shrink_steps(value)
+        except (TypeError, ValueError):
+            return 0
+
+    def _selected_auto_text_shrink_steps(self) -> int:
+        selected = self.auto_text_shrink_var.get()
+        for steps in AUTO_TEXT_SHRINK_STEPS:
+            if selected == self._auto_text_shrink_label(steps):
+                return steps
+        raise ValueError(self.tr("invalid_auto_text_shrink_steps"))
 
     def _ensure_template_name(self, _event=None) -> str:
         name = normalized_text(self.template_name_var.get())
@@ -615,6 +656,13 @@ class MaterialDrawingApp:
             self._current_template_data.get("cad_output_scale", self.settings.cad_output_scale),
         )
         self.cad_output_scale_var.set(str(self._safe_cad_output_scale(stored_scale)))
+        stored_shrink_steps = ui.get(
+            "auto_text_shrink_steps",
+            self._current_template_data.get("dynamic_table_layout", {}).get(
+                "auto_text_shrink_steps", self.settings.auto_text_shrink_steps
+            ),
+        )
+        self.auto_text_shrink_var.set(self._auto_text_shrink_label(self._safe_auto_text_shrink_steps(stored_shrink_steps)))
         self.loaded_template_name = name
         self.template_name_var.set(name)
         self.status_var.set(self.tr("template_loaded", name=name))
@@ -879,6 +927,7 @@ class MaterialDrawingApp:
             formats = self._formats()
             descending = self.sort_var.get() == self.tr("descending")
             cad_output_scale = self._selected_cad_output_scale()
+            auto_text_shrink_steps = self._selected_auto_text_shrink_steps()
         except Exception as exc:
             self._operation_failed(exc)
             return
@@ -897,6 +946,7 @@ class MaterialDrawingApp:
                 "formats": formats,
                 "descending": descending,
                 "cad_output_scale": cad_output_scale,
+                "auto_text_shrink_steps": auto_text_shrink_steps,
             }
 
         self._run_thread(operation)
@@ -930,6 +980,7 @@ class MaterialDrawingApp:
                 formats=request["formats"],
                 descending=request["descending"],
                 cad_output_scale=request["cad_output_scale"],
+                auto_text_shrink_steps=request["auto_text_shrink_steps"],
             )
             message = self.tr(
                 "generated",
@@ -937,6 +988,12 @@ class MaterialDrawingApp:
                 output=request["output_path"],
                 logs=log_directory(),
             )
+            reduced = [
+                f"{sheet.name}: {round(float(sheet.table_layout.get('factor', 1.0)) * 100)}%"
+                for sheet in result.sheets if int(sheet.table_layout.get("actual_steps", 0)) > 0
+            ]
+            if reduced:
+                message += "\n" + self.tr("generated_with_text_shrink", details="、".join(reduced))
             return {"kind": "generate", "result": result, "message": message}
 
         self._run_thread(operation)
@@ -977,6 +1034,7 @@ class MaterialDrawingApp:
             preview_sheet=self.preview.selected_sheet_name(),
             material_symbols=self.material_symbols_var.get(),
             cad_output_scale=self._safe_cad_output_scale(self.cad_output_scale_var.get()),
+            auto_text_shrink_steps=self._selected_auto_text_shrink_steps(),
         )
         try:
             self.settings.save()

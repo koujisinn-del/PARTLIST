@@ -10,6 +10,7 @@ from material_drawing_generator.service import generate_drawings, preview_excel
 from material_drawing_generator.template import SiteTemplate, default_template_path
 from material_drawing_generator.runtime_paths import dwg_tools_available
 from material_drawing_generator.cad_output_scale import CAD_OUTPUT_SCALES
+from material_drawing_generator.table_layout_policy import AUTO_TEXT_SHRINK_STEPS
 
 
 def build_parser(default_language: str = "zh") -> argparse.ArgumentParser:
@@ -28,6 +29,11 @@ def build_parser(default_language: str = "zh") -> argparse.ArgumentParser:
         "--cad-output-scale", type=int, choices=CAD_OUTPUT_SCALES,
         default=None,
         help="CAD 模型空间整体放大倍率：100、150 或 200；默认跟随现场模板（未设置时150），PDF保持A3",
+    )
+    parser.add_argument(
+        "--auto-text-shrink-steps", type=int, choices=AUTO_TEXT_SHRINK_STEPS,
+        default=None,
+        help="空间不足时整表统一字号/行高降档：0保持，1降至90%，2最多降至80%；默认跟随现场模板",
     )
     return parser
 
@@ -64,6 +70,7 @@ def main(default_language: str | None = None):
         drawing_date=args.date,
         descending=args.descending,
         cad_output_scale=args.cad_output_scale,
+        auto_text_shrink_steps=args.auto_text_shrink_steps,
     )
     print(f"Generated {len(result.sheets)} drawings in {Path(args.output).resolve()}")
     print(result.report_path)

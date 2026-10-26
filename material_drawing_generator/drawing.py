@@ -30,6 +30,10 @@ class DrawingError(ValueError):
     pass
 
 
+class TableFitError(DrawingError):
+    """Known layout-space failure that whole-table fallback may retry."""
+
+
 class DrawingAdapter(Protocol):
     def line(self, x1: float, y1: float, x2: float, y2: float, layer: str, width: float = 0.25): ...
     def rect(self, x1: float, y1: float, x2: float, y2: float, layer: str, width: float = 0.25): ...
@@ -900,6 +904,7 @@ def _draw_table(
                     material_plan.factory.draw_cell(
                         adapter, material_plan, section_row, x_positions[column_index], row_bottom,
                         x_positions[column_index + 1], row_top, table_font_size,
+                        vertical_padding=0.3 * float(table.get("text_shrink_factor", 1.0)),
                     )
                     continue
                 value = section_row.value_for(str(column["field"]))
@@ -937,7 +942,7 @@ def _table_row_height(
     # The header is also one unit cell; every merged cell is N identical units.
     row_height = min(preferred_row_height, max_height / (total_rows + 1))
     if row_height + 1e-8 < min_row_height:
-        raise DrawingError(
+        raise TableFitError(
             f"{table['title']} 有 {total_rows} 行，按最小行高 {min_row_height} mm 仍无法放入当前区域。"
         )
     return row_height, total_rows
@@ -974,6 +979,48 @@ def _take_group_rows(groups: list[MemberGroup], capacity: int) -> tuple[list[Mem
 
 
 def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None) -> list[tuple[dict, list[MemberGroup], float]]:
+    """Try the requested uniform table size, then permitted whole-table steps."""
+    from .table_layout_policy import AUTO_TEXT_SHRINK_FACTORS, validate_auto_text_shrink_steps
+
+    requested = validate_auto_text_shrink_steps(
+        template.data.get("dynamic_table_layout", {}).get("auto_text_shrink_steps", 0)
+    )
+    source_layout = template.data.get("dynamic_table_layout", {})
+    base_text = float(source_layout.get("fixed_text_height", 1.0))
+    base_row = float(source_layout.get("fixed_row_height", 2.5))
+    last_fit_error = None
+    for step in range(requested + 1):
+        factor = AUTO_TEXT_SHRINK_FACTORS[step]
+        actual_text = base_text * factor
+        actual_row = base_row * factor
+        if step > 0 and (actual_text < 0.65 - 1e-9 or actual_row < 2.0 - 1e-9):
+            raise DrawingError(
+                f"整表字号/行高第 {step} 档将低于安全下限（字号至少 0.65 mm、行高至少 2.0 mm）；"
+                "请调整模板参数。"
+            )
+        trial = SiteTemplate(template.path, copy.deepcopy(template.data))
+        layout = trial.data.setdefault("dynamic_table_layout", {})
+        layout["fixed_text_height"] = actual_text
+        layout["fixed_row_height"] = actual_row
+        layout["_auto_text_shrink_factor"] = factor
+        try:
+            tables = _prepare_tables_fixed(sheet, trial, material_plan)
+        except TableFitError as exc:
+            last_fit_error = exc
+            continue
+        for table, _groups, _font_size in tables:
+            table["requested_text_height"] = base_text
+            table["actual_text_height"] = actual_text
+            table["actual_row_height"] = actual_row
+            table["text_shrink_steps"] = step
+            table["text_shrink_factor"] = factor
+        return tables
+    if last_fit_error is not None:
+        raise last_fit_error
+    return []
+
+
+def _prepare_tables_fixed(sheet: SheetData, template: SiteTemplate, material_plan=None) -> list[tuple[dict, list[MemberGroup], float]]:
     """Measure at a fixed per-table font, then allocate columns without shrinking text."""
     from ezdxf.fonts import fonts
     font = fonts.make_font(_cjk_font_filename(), 1.0)
@@ -993,6 +1040,15 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
         raise DrawingError("固定行高不足以容纳统一字号和留白，请调整整体参数。")
     if not math.isfinite(preferred_size) or preferred_size <= 0:
         raise DrawingError("表格字号必须大于零。")
+    material_probe = None
+    if material_plan is not None:
+        from types import SimpleNamespace
+        probe_doc = _load_ezdxf().new("R2010", setup=False)
+        probe_style = "MDG_CJK"
+        probe_doc.styles.new(probe_style, dxfattribs={"font": _cjk_font_filename()})
+        probe_plan = copy.copy(material_plan)
+        probe_plan.cells = []
+        material_probe = (SimpleNamespace(doc=probe_doc, modelspace=probe_doc.modelspace(), text_style=probe_style), probe_plan)
     prepared = []
     minimums = []
     minimums_by_table = []
@@ -1023,11 +1079,26 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
                 measured = [font.text_width_ex(str(column["label"]), size)]
                 measured.extend(material_plan.column_width(row, size) for group in groups for row in group.rows)
                 width = max(measured) + 1.2
+                vertical_padding = 0.3 * float(layout.get("_auto_text_shrink_factor", 1.0))
                 for group in groups:
                     for row in group.rows:
                         rule = material_plan.bindings[row.source_row].rule
-                        if material_plan.factory.geometry(rule).height * size > fixed_unit - 0.6 + 1e-5:
-                            raise DrawingError(f"{sheet.name} 第 {row.source_row} 行材质符号超过固定行高，请调整整表参数。")
+                        if material_plan.factory.geometry(rule).height * size > fixed_unit - vertical_padding * 2 + 1e-5:
+                            raise TableFitError(f"{sheet.name} 第 {row.source_row} 行材质符号超过固定行高，请调整整表参数。")
+                        adapter, probe_plan = material_probe
+                        try:
+                            material_plan.factory.draw_cell(
+                                adapter, probe_plan, row, 0.0, 0.0, width + 0.01, fixed_unit, size,
+                                vertical_padding=vertical_padding,
+                            )
+                        except ValueError as exc:
+                            if any(marker in str(exc) for marker in (
+                                "无法放入单元格", "需要垂直空间", "越出单元格",
+                            )):
+                                raise TableFitError(
+                                    f"{sheet.name} 第 {row.source_row} 行材质符号和断面无法按当前整表行高放入。"
+                                ) from exc
+                            raise
             else:
                 values.extend(row.value_for(column["field"]) for group in groups for row in group.rows)
                 width = max(font.text_width_ex(_safe_drawing_text(value), size) for value in values) + 1.2
@@ -1040,7 +1111,7 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
         minimums_by_table.append(table_minimums)
     needed = sum(minimums)
     if needed > available + 1e-6:
-        raise DrawingError(
+        raise TableFitError(
             f"工作表“{sheet.name}”按统一字号扩列后需要 {needed:.1f} mm，"
             f"当前可用列宽合计 {available:.1f} mm。请调整整表字号或表格间距；"
             "不会单独缩小文字、越出 A3 或拆成多页。"
@@ -1072,7 +1143,7 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
             unit, _ = _table_row_height(table, groups)
             table["header_height"] = table["row_height"] = unit
             prepared[table_index] = (table, groups, size)
-        except DrawingError:
+        except TableFitError:
             overflowed = True
         x += table_width + gap
     if not overflowed:
@@ -1093,7 +1164,7 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
         continuation_number = 1
         while remaining:
             if current_x + table_width > right + 1e-6:
-                raise DrawingError(
+                raise TableFitError(
                     f"工作表“{sheet.name}”续表需要更多横向空间：在固定字号和最小列宽下，"
                     f"第 {continuation_number} 个表格将超出可用范围 {right:g} mm。"
                 )
@@ -1115,13 +1186,13 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
                     table["max_height"] = min(table["max_height"], layout_top - note_bottom)
             capacity = math.floor((float(table["max_height"]) + 1e-8) / fixed_unit) - 1
             if capacity < 1:
-                raise DrawingError(
+                raise TableFitError(
                     f"工作表“{sheet.name}”的续表与注记区冲突后没有可用数据行空间；"
                     "请调整表格范围或注记区。"
                 )
             column_groups, remaining = _take_group_rows(remaining, capacity)
             if not column_groups:
-                raise DrawingError(f"工作表“{sheet.name}”无法在续表中放入下一部件组。")
+                raise TableFitError(f"工作表“{sheet.name}”无法在续表中放入下一部件组。")
             if continuation_number > 1:
                 table["title"] = f"{source_table['title']} ({continuation_number})"
             continued.append((table, column_groups, size))
