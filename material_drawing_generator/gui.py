@@ -12,6 +12,7 @@ import tkinter.font as tkfont
 from tkinter import filedialog, messagebox, ttk
 
 from .app_logging import get_logger, log_directory
+from .cad_output_scale import CAD_OUTPUT_SCALES, DEFAULT_CAD_OUTPUT_SCALE, validate_cad_output_scale
 from .i18n import translator
 from .models import PreviewCellStyle, PreviewSheet, WorkbookPreview
 from .models import normalized_text
@@ -395,6 +396,10 @@ class MaterialDrawingApp:
         else:
             self._current_template_data = copy.deepcopy(record["layout"])
         self.loaded_template_name = requested_template_name
+        stored_site_scale = record.get("ui", {}).get(
+            "cad_output_scale", self._current_template_data.get("cad_output_scale", self.settings.cad_output_scale)
+        ) if record is not None else self.settings.cad_output_scale
+        self.cad_output_scale_var = tk.StringVar(value=str(self._safe_cad_output_scale(stored_site_scale)))
 
         self.excel_var = tk.StringVar(value=self.settings.excel_path)
         self.output_var = tk.StringVar(value=self.settings.output_path)
@@ -452,24 +457,41 @@ class MaterialDrawingApp:
 
         settings = ttk.LabelFrame(main, text=self.tr("drawing_settings"), padding=10)
         settings.grid(row=6, column=0, columnspan=4, sticky="ew", pady=(10, 8))
-        ttk.Label(settings, text=self.tr("sort")).pack(side="left")
+        settings_top = ttk.Frame(settings)
+        settings_top.pack(fill="x")
+        ttk.Label(settings_top, text=self.tr("sort")).pack(side="left")
         ttk.Combobox(
-            settings,
+            settings_top,
             textvariable=self.sort_var,
             values=(self.tr("ascending"), self.tr("descending")),
             state="readonly",
             width=9,
         ).pack(side="left", padx=(7, 22))
-        ttk.Label(settings, text=self.tr("formats")).pack(side="left")
-        ttk.Checkbutton(settings, text="PDF", variable=self.pdf_var).pack(side="left", padx=(8, 6))
-        ttk.Checkbutton(settings, text="DXF", variable=self.dxf_var).pack(side="left", padx=6)
-        ttk.Checkbutton(settings, text="DWG", variable=self.dwg_var).pack(side="left", padx=6)
+        ttk.Label(settings_top, text=self.tr("formats")).pack(side="left")
+        ttk.Checkbutton(settings_top, text="PDF", variable=self.pdf_var).pack(side="left", padx=(8, 6))
+        ttk.Checkbutton(settings_top, text="DXF", variable=self.dxf_var).pack(side="left", padx=6)
+        ttk.Checkbutton(settings_top, text="DWG", variable=self.dwg_var).pack(side="left", padx=6)
         self.material_checkbox = ttk.Checkbutton(
-            settings, text=self.tr("use_material_symbols"), variable=self.material_symbols_var,
+            settings_top, text=self.tr("use_material_symbols"), variable=self.material_symbols_var,
             command=self._save_settings,
         )
         self.material_checkbox.pack(side="left", padx=(18, 6))
-        ttk.Button(settings, text=self.tr("material_library"), command=self._show_material_library).pack(side="left", padx=6)
+        ttk.Button(settings_top, text=self.tr("material_library"), command=self._show_material_library).pack(side="left", padx=6)
+        settings_scale = ttk.Frame(settings)
+        settings_scale.pack(fill="x", pady=(8, 0))
+        self.cad_output_scale_label = ttk.Label(settings_scale, text=self.tr("cad_output_scale"))
+        self.cad_output_scale_label.pack(side="left", padx=(0, 5))
+        self.cad_output_scale_combo = ttk.Combobox(
+            settings_scale,
+            textvariable=self.cad_output_scale_var,
+            values=tuple(str(value) for value in CAD_OUTPUT_SCALES),
+            state="readonly",
+            width=5,
+        )
+        self.cad_output_scale_combo.pack(side="left", padx=(0, 5))
+        self.cad_output_scale_combo.bind("<<ComboboxSelected>>", lambda _event: self._save_settings())
+        self.cad_output_scale_note = ttk.Label(settings_scale, text=self.tr("cad_output_scale_note"))
+        self.cad_output_scale_note.pack(side="left", padx=(0, 6))
 
         actions = ttk.Frame(main)
         actions.grid(row=7, column=0, columnspan=4, sticky="ew", pady=(2, 8))
@@ -525,6 +547,7 @@ class MaterialDrawingApp:
             copy.deepcopy(self._current_template_data),
         )
         template.data.setdefault("material_symbols", {})["enabled"] = self.material_symbols_var.get()
+        template.data["cad_output_scale"] = self._selected_cad_output_scale()
         frame_path = self.frame_dwg_var.get().strip()
         return template.with_frame_dwg(frame_path) if frame_path else template
 
@@ -537,7 +560,26 @@ class MaterialDrawingApp:
             "output_dxf": self.dxf_var.get(),
             "output_dwg": self.dwg_var.get(),
             "material_symbols": self.material_symbols_var.get(),
+            "cad_output_scale": self._selected_cad_output_scale(),
         }
+
+    @staticmethod
+    def _safe_cad_output_scale(value) -> int:
+        try:
+            if isinstance(value, str) and value.strip().isdigit():
+                value = int(value.strip())
+            return validate_cad_output_scale(value)
+        except (TypeError, ValueError):
+            return DEFAULT_CAD_OUTPUT_SCALE
+
+    def _selected_cad_output_scale(self) -> int:
+        value = self.cad_output_scale_var.get().strip()
+        if not value.isdigit():
+            raise ValueError(self.tr("invalid_cad_output_scale"))
+        try:
+            return validate_cad_output_scale(int(value))
+        except ValueError as exc:
+            raise ValueError(self.tr("invalid_cad_output_scale")) from exc
 
     def _ensure_template_name(self, _event=None) -> str:
         name = normalized_text(self.template_name_var.get())
@@ -568,6 +610,11 @@ class MaterialDrawingApp:
         self.dxf_var.set(bool(ui.get("output_dxf", True)))
         self.dwg_var.set(bool(ui.get("output_dwg", True)))
         self.material_symbols_var.set(bool(ui.get("material_symbols", self._current_template_data.get("material_symbols", {}).get("enabled", False))))
+        stored_scale = ui.get(
+            "cad_output_scale",
+            self._current_template_data.get("cad_output_scale", self.settings.cad_output_scale),
+        )
+        self.cad_output_scale_var.set(str(self._safe_cad_output_scale(stored_scale)))
         self.loaded_template_name = name
         self.template_name_var.set(name)
         self.status_var.set(self.tr("template_loaded", name=name))
@@ -831,6 +878,7 @@ class MaterialDrawingApp:
             template = self._template()
             formats = self._formats()
             descending = self.sort_var.get() == self.tr("descending")
+            cad_output_scale = self._selected_cad_output_scale()
         except Exception as exc:
             self._operation_failed(exc)
             return
@@ -848,6 +896,7 @@ class MaterialDrawingApp:
                 "template": template,
                 "formats": formats,
                 "descending": descending,
+                "cad_output_scale": cad_output_scale,
             }
 
         self._run_thread(operation)
@@ -880,6 +929,7 @@ class MaterialDrawingApp:
                 request["template"],
                 formats=request["formats"],
                 descending=request["descending"],
+                cad_output_scale=request["cad_output_scale"],
             )
             message = self.tr(
                 "generated",
@@ -926,6 +976,7 @@ class MaterialDrawingApp:
             output_dwg=self.dwg_var.get(),
             preview_sheet=self.preview.selected_sheet_name(),
             material_symbols=self.material_symbols_var.get(),
+            cad_output_scale=self._safe_cad_output_scale(self.cad_output_scale_var.get()),
         )
         try:
             self.settings.save()

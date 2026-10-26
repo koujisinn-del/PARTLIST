@@ -1,0 +1,17 @@
+[
+  {
+    "scale": 100,
+    "pixel_sha256": "543dad22d04b7429e628dc6158b3ac559f492736d44f1e10a67c2744ab1ebae1",
+    "text_sha256": "b2d4c753e5d4d281467d2e002aa262891ac1d2e65df3789b81e74dbb8b3fafde"
+  },
+  {
+    "scale": 150,
+    "pixel_sha256": "543dad22d04b7429e628dc6158b3ac559f492736d44f1e10a67c2744ab1ebae1",
+    "text_sha256": "b2d4c753e5d4d281467d2e002aa262891ac1d2e65df3789b81e74dbb8b3fafde"
+  },
+  {
+    "scale": 200,
+    "pixel_sha256": "543dad22d04b7429e628dc6158b3ac559f492736d44f1e10a67c2744ab1ebae1",
+    "text_sha256": "b2d4c753e5d4d281467d2e002aa262891ac1d2e65df3789b81e74dbb8b3fafde"
+  }
+]

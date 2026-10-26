@@ -158,10 +158,10 @@ class FrameTemplateExampleTests(unittest.TestCase):
                 history = sorted(
                     (round(entity.dxf.insert.y, 3), entity.dxf.text)
                     for entity in texts
-                    if abs(entity.dxf.insert.x - 392.0) < 0.01 and entity.dxf.text[:2].isdigit()
+                    if abs(entity.dxf.insert.x - 392.0 * 150) < 0.01 and entity.dxf.text[:2].isdigit()
                 )
                 expected = [
-                    (26.0 + 5.0 * index, f"{value[2:4]}.{value[5:7]}.{value[8:10]}")
+                    ((26.0 + 5.0 * index) * 150, f"{value[2:4]}.{value[5:7]}.{value[8:10]}")
                     for index, value in enumerate(dates)
                 ]
                 self.assertEqual(history, expected)

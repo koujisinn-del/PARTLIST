@@ -9,6 +9,7 @@ from material_drawing_generator.gui import run_gui
 from material_drawing_generator.service import generate_drawings, preview_excel
 from material_drawing_generator.template import SiteTemplate, default_template_path
 from material_drawing_generator.runtime_paths import dwg_tools_available
+from material_drawing_generator.cad_output_scale import CAD_OUTPUT_SCALES
 
 
 def build_parser(default_language: str = "zh") -> argparse.ArgumentParser:
@@ -23,6 +24,11 @@ def build_parser(default_language: str = "zh") -> argparse.ArgumentParser:
     parser.add_argument("--descending", action="store_true", help="部件名称降序")
     parser.add_argument("--preview", action="store_true", help="只读取并显示统计，不生成")
     parser.add_argument("--material-symbols", action="store_true", help="启用基础材质库及自定义符号（试验）")
+    parser.add_argument(
+        "--cad-output-scale", type=int, choices=CAD_OUTPUT_SCALES,
+        default=None,
+        help="CAD 模型空间整体放大倍率：100、150 或 200；默认跟随现场模板（未设置时150），PDF保持A3",
+    )
     return parser
 
 
@@ -57,6 +63,7 @@ def main(default_language: str | None = None):
         version=args.version,
         drawing_date=args.date,
         descending=args.descending,
+        cad_output_scale=args.cad_output_scale,
     )
     print(f"Generated {len(result.sheets)} drawings in {Path(args.output).resolve()}")
     print(result.report_path)

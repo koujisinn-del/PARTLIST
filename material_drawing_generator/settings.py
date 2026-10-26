@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from .runtime_paths import app_data_root, dwg_tools_available
+from .cad_output_scale import DEFAULT_CAD_OUTPUT_SCALE
 
 
 @dataclass(slots=True)
@@ -22,6 +23,7 @@ class UserSettings:
     output_dwg: bool = field(default_factory=dwg_tools_available)
     preview_sheet: str = ""
     material_symbols: bool = False
+    cad_output_scale: int = DEFAULT_CAD_OUTPUT_SCALE
 
     @classmethod
     def path(cls) -> Path:

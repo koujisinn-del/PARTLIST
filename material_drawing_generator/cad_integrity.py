@@ -106,9 +106,14 @@ def write_compatibility_dxf(source_path: Path, target_path: Path) -> None:
     importer.import_modelspace()
     importer.finalize()
     _restore_text_styles(source, target)
-    for name in ("$EXTMIN", "$EXTMAX", "$LIMMIN", "$LIMMAX"):
+    for name in ("$EXTMIN", "$EXTMAX", "$LIMMIN", "$LIMMAX", "$LTSCALE"):
         if name in source.header:
             target.header[name] = source.header[name]
+    source_model = source.modelspace()
+    target_model = target.modelspace()
+    for name in ("extmin", "extmax", "limmin", "limmax"):
+        if source_model.dxf.hasattr(name):
+            setattr(target_model.dxf, name, getattr(source_model.dxf, name))
     target.header["$DIMSTYLE"] = "Standard"
 
     # Importer does not remap the source's plot-style pointer. In the new
@@ -300,6 +305,20 @@ def validate_roundtrip(source_path: Path, reread_path: Path) -> dict:
     validate_raw_handles(reread_path)
     expected = ezdxf.readfile(source_path)
     actual = ezdxf.readfile(reread_path)
+    expected_scale = float(expected.header.get("$LTSCALE", 1.0))
+    actual_scale = float(actual.header.get("$LTSCALE", 1.0))
+    if not math.isclose(actual_scale, expected_scale, rel_tol=1e-6, abs_tol=1e-8):
+        raise ValueError(f"DWG 回读线型全局倍率发生变化：{expected_scale} → {actual_scale}。")
+    expected_model = expected.modelspace()
+    actual_model = actual.modelspace()
+    for name in ("limmin", "limmax"):
+        if not expected_model.dxf.hasattr(name) or not actual_model.dxf.hasattr(name):
+            raise ValueError(f"DWG 回读缺少模型空间 {name.upper()}。")
+        before_limit = getattr(expected_model.dxf, name)
+        after_limit = getattr(actual_model.dxf, name)
+        if any(not math.isclose(float(a), float(b), rel_tol=1e-6, abs_tol=1e-5)
+               for a, b in zip(before_limit, after_limit)):
+            raise ValueError(f"DWG 回读模型空间 {name.upper()} 发生变化：{before_limit} → {after_limit}。")
     from .material_drawing import validate_material_geometry
     material_checks = validate_material_geometry(expected, actual)
     before = _entity_snapshot(actual)
