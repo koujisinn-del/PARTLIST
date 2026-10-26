@@ -20,6 +20,8 @@ from material_drawing_generator.xlsx_reader import _read_sheet, read_workbook
 from material_drawing_generator.xlsx_reader import ExcelReadError
 from material_drawing_generator.text_pdf import TextPdfBook
 
+SAFE_FRAME_DWG = Path(__file__).resolve().parents[1] / "docs" / "frame_template_example" / "frame_template_example_150x.dwg"
+
 
 class MaterialOutputTests(unittest.TestCase):
     def template(self):
@@ -284,9 +286,9 @@ class MaterialOutputTests(unittest.TestCase):
             convert_dxf_to_dwg(src, dest)
             self.assertGreater(dest.stat().st_size, 1000)
 
-    @unittest.skipUnless((_converter_root() / "dwgwrite.exe").exists() and (Path(__file__).resolve().parents[1] / "図面テンプレート.dwg").exists(), "DWG frame unavailable")
+    @unittest.skipUnless((_converter_root() / "dwgwrite.exe").exists() and SAFE_FRAME_DWG.exists(), "DWG frame unavailable")
     def test_material_symbol_with_frame_roundtrips_to_dwg(self):
-        frame = Path(__file__).resolve().parents[1] / "図面テンプレート.dwg"
+        frame = SAFE_FRAME_DWG
         sheet, plan = self.data([
             SectionRow(2, "G1", "大梁", section="H-248X124X5X8", material="TMCP325B"),
             SectionRow(3, "G2", "大梁", section="BH-1000X350X19X28", material="SN400B"),
@@ -299,13 +301,13 @@ class MaterialOutputTests(unittest.TestCase):
             convert_dxf_to_dwg(source, dest)
             self.assertGreater(dest.stat().st_size, 1000)
 
-    @unittest.skipUnless((_converter_root() / "dwgwrite.exe").exists() and (Path(__file__).resolve().parents[1] / "図面テンプレート.dwg").exists(), "DWG frame unavailable")
+    @unittest.skipUnless((_converter_root() / "dwgwrite.exe").exists() and SAFE_FRAME_DWG.exists(), "DWG frame unavailable")
     def test_bundled_workbook_with_pasted_material_column_keeps_sections(self):
         root = Path(__file__).resolve().parents[1]
         source_workbook = root / "test_data" / "示例_图纸列表与2F部材表.xlsx"
         if not source_workbook.exists():
             self.skipTest("bundled workbook unavailable")
-        template = self.template().with_frame_dwg(root / "図面テンプレート.dwg")
+        template = self.template().with_frame_dwg(SAFE_FRAME_DWG)
         workbook = read_workbook(source_workbook, template)
         sheet = workbook.sheets[0]
         grades = ("SS400", "SN400B", "TMCP325B", "SM490A")

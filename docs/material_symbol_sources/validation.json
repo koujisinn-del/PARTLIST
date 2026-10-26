@@ -1,0 +1,26 @@
+[
+  {
+    "example": "circle_N",
+    "source_text_height": 100,
+    "normalized_text_height": 1,
+    "editable_texts": 1,
+    "dxf_and_dwg_import": "passed",
+    "default_row_fit": "passed"
+  },
+  {
+    "example": "pentagon_T",
+    "source_text_height": 100,
+    "normalized_text_height": 1,
+    "editable_texts": 1,
+    "dxf_and_dwg_import": "passed",
+    "default_row_fit": "passed"
+  },
+  {
+    "example": "hexagon_N",
+    "source_text_height": 100,
+    "normalized_text_height": 1,
+    "editable_texts": 1,
+    "dxf_and_dwg_import": "passed",
+    "default_row_fit": "passed"
+  }
+]

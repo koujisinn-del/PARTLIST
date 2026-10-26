@@ -534,12 +534,19 @@ class CadAdapter:
         for key, (label, default_marker) in markers.items():
             marker = str(placeholders.get(key, default_marker))
             candidates = [marker, *placeholders.get(f"{key}_aliases", [])]
+            matches: dict[str, Any] = {}
             for candidate in candidates:
                 entity = self._text_placeholder(str(candidate))
                 if entity is not None:
-                    anchors[key] = entity
-                    break
-            if key not in anchors:
+                    identity = str(entity.dxf.get("handle", "")) or str(id(entity))
+                    matches[identity] = entity
+            if len(matches) > 1:
+                raise DrawingError(
+                    f"图框字段“{label}”的多个候选定位文字同时存在，请只保留一个：{marker}。"
+                )
+            if matches:
+                anchors[key] = next(iter(matches.values()))
+            else:
                 missing.append(f"{label}（{marker}）")
         if missing:
             raise DrawingError(

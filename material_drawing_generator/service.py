@@ -31,6 +31,57 @@ from .table_layout_policy import validate_auto_text_shrink_steps
 logger = get_logger()
 
 
+def _path_key(path: str | Path) -> str:
+    return str(Path(path).resolve()).casefold()
+
+
+def _preflight_output_targets(
+    excel_path: str | Path,
+    output_directory: str | Path,
+    template: SiteTemplate,
+    requested: set[str],
+    workbook: WorkbookData,
+) -> None:
+    """Reject colliding CAD names and destinations that would replace inputs."""
+    output_root = Path(output_directory).resolve()
+    cad_requested = bool({"dxf", "dwg"}.intersection(requested))
+    destinations = [output_root / "生成报告.json"]
+    if "pdf" in requested:
+        destinations.append(output_root / f"{safe_filename(Path(excel_path).stem)}_图纸.pdf")
+    names: dict[str, str] = {}
+    if cad_requested:
+        for sheet in workbook.sheets:
+            base_name = safe_filename(sheet.name)
+            if "dxf" in requested or "dwg" in requested:
+                destinations.append(output_root / f"{base_name}.dxf")
+            if "dwg" in requested:
+                destinations.append(output_root / f"{base_name}.dwg")
+            key = base_name.casefold()
+            previous = names.get(key)
+            if previous is not None:
+                raise ValueError(
+                    f"工作表名称“{previous}”和“{sheet.name}”会生成同名 CAD 文件“{base_name}”；"
+                    "请先修改工作表名称，未创建输出或修改 Excel。"
+                )
+            names[key] = sheet.name
+
+    excel_key = _path_key(excel_path)
+    frame_path = template.frame_dwg_path
+    frame_key = _path_key(frame_path) if cad_requested and frame_path is not None else None
+    for target in destinations:
+        target_key = _path_key(target)
+        if target_key == excel_key:
+            raise ValueError(
+                f"输出目标“{target}”与输入 Excel“{Path(excel_path).resolve()}”相同；"
+                "为保护原文件，未创建输出或修改 Excel。"
+            )
+        if frame_key is not None and target_key == frame_key:
+            raise ValueError(
+                f"CAD 输出目标“{target}”与输入图框“{frame_path}”相同；"
+                "为保护原图框，未创建输出或修改 Excel。"
+            )
+
+
 @dataclass(slots=True)
 class SheetSummary:
     name: str
@@ -130,6 +181,8 @@ def generate_drawings(
     if "dwg" in requested and not dwg_tools_available():
         raise ValueError("当前程序目录缺少 DWG 转换组件，请补齐组件后生成 DWG；PDF/DXF 可独立使用。尚未开始生成或修改 Excel。")
     workbook = read_workbook(excel_path, template, descending=descending)
+    output_root = Path(output_directory).resolve()
+    _preflight_output_targets(excel_path, output_root, template, requested, workbook)
     material_plans = None
     from .drawing import _prepare_tables
     if template.material_symbols_enabled:
@@ -160,7 +213,6 @@ def generate_drawings(
                 "actual_row_height": float(layout.get("fixed_row_height", 2.5)),
                 "factor": 1.0,
             }
-    output_root = Path(output_directory).resolve()
     output_root.mkdir(parents=True, exist_ok=True)
     highlight_result = apply_submission_highlighting(excel_path, workbook.drawing_list)
     logger.info("Excel 标红：%s", highlight_result.message)
