@@ -1,6 +1,7 @@
 import copy
 import json
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 import zipfile
@@ -166,6 +167,50 @@ class MaterialOutputTests(unittest.TestCase):
             render_dxf(src, sheet, self.template(), DrawingMetadata(), plan)
             result = verify_material_cells(ezdxf.readfile(src), plan)
             self.assertEqual((result["insertions"], result["blocks"]), (10, 1))
+
+    def test_continuation_columns_keep_material_text_aligned_and_survive_dwg_roundtrip(self):
+        rows = [SectionRow(i + 2, "BeamAb", "大梁", section="H-100", material="TMCP325B") for i in range(100)]
+        sheet, plan = self.data(rows)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "continued.dxf"
+            render_dxf(source, sheet, self.template(), DrawingMetadata(), plan)
+            doc = ezdxf.readfile(source)
+            result = verify_material_cells(doc, plan)
+            self.assertEqual(result["verified_rows"], 100)
+            self.assertEqual(len(plan.cells), 100)
+            for cell in plan.cells:
+                section = doc.entitydb.get(cell["text_handle"])
+                ref = doc.entitydb.get(cell["block_handle"])
+                self.assertIsNotNone(section)
+                self.assertIsNotNone(ref)
+                symbol_texts = [entity for entity in ref.virtual_entities() if entity.dxftype() == "TEXT"]
+                self.assertEqual(len(symbol_texts), 2)
+                for symbol_text in symbol_texts:
+                    self.assertAlmostEqual(symbol_text.dxf.insert.y, section.dxf.insert.y, places=6)
+                    self.assertAlmostEqual(symbol_text.dxf.height, section.dxf.height, places=6)
+
+            converter_root = _converter_root()
+            if not (converter_root / "dwgwrite.exe").exists() or not (converter_root / "dwg2dxf.exe").exists():
+                self.skipTest("本机 LibreDWG 转换工具不可用")
+            dwg = root / "continued.dwg"
+            convert_dxf_to_dwg(source, dwg)
+            reread = root / "continued_roundtrip.dxf"
+            result = subprocess.run(
+                [str(converter_root / "dwg2dxf.exe"), "-y", "-o", str(reread), str(dwg)],
+                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            roundtrip_doc = ezdxf.readfile(reread)
+            self.assertEqual(
+                sum(1 for entity in roundtrip_doc.modelspace().query("TEXT") if entity.dxf.text == "H-100"),
+                100,
+            )
+            self.assertEqual(
+                sum(1 for entity in roundtrip_doc.modelspace().query("INSERT") if entity.dxf.name.startswith("MDG_MAT_")),
+                100,
+            )
+            validate_material_geometry(doc, roundtrip_doc)
 
     def test_all_supported_custom_shapes_have_editable_geometry(self):
         factory = SymbolFactory(_cjk_font_filename())

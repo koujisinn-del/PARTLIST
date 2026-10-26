@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import copy
 import math
 import os
 import re
@@ -942,6 +943,36 @@ def _table_row_height(
     return row_height, total_rows
 
 
+def _take_group_rows(groups: list[MemberGroup], capacity: int) -> tuple[list[MemberGroup], list[MemberGroup]]:
+    """Fill one continuation column without splitting groups that fit whole."""
+    if capacity <= 0:
+        return [], groups
+    placed: list[MemberGroup] = []
+    used = 0
+    consumed = 0
+    for index, group in enumerate(groups):
+        count = len(group.rows)
+        if count <= 0:
+            consumed = index + 1
+            placed.append(group)
+            continue
+        if count > capacity:
+            if used:
+                break
+            first_rows = group.rows[:capacity]
+            rest_rows = group.rows[capacity:]
+            placed.append(MemberGroup(group.category, group.member_name, first_rows, first_rows[0].source_row))
+            remainder = [MemberGroup(group.category, group.member_name, rest_rows, rest_rows[0].source_row)]
+            remainder.extend(groups[index + 1:])
+            return placed, remainder
+        if count > capacity - used:
+            break
+        placed.append(group)
+        used += count
+        consumed = index + 1
+    return placed, groups[consumed:]
+
+
 def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None) -> list[tuple[dict, list[MemberGroup], float]]:
     """Measure at a fixed per-table font, then allocate columns without shrinking text."""
     from ezdxf.fonts import fonts
@@ -953,6 +984,8 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
     left = float(layout.get("left", min(t["x"] for t in tables)))
     right = float(layout.get("right", float(template.paper.get("revision_left", 392)) - 6))
     gap = float(layout.get("horizontal_gap", 8))
+    layout_top = float(layout.get("top", max(float(t["top"]) for t in tables)))
+    layout_bottom = float(layout.get("bottom", float(template.paper.get("bottom_info_top", 55.0)) + 8.0))
     available = right - left - gap * (len(tables) - 1)
     preferred_size = float(layout.get("fixed_text_height", 1.0))
     fixed_unit = float(layout.get("fixed_row_height", 2.5))
@@ -962,6 +995,7 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
         raise DrawingError("表格字号必须大于零。")
     prepared = []
     minimums = []
+    minimums_by_table = []
     weights = []
     for table in tables:
         groups = sheet.groups_for_category(table["category"])
@@ -977,12 +1011,12 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
             if not any(c["field"] == "section" for c in table["columns"]):
                 raise DrawingError(f"{table['title']} 缺少断面列，不能插入材质记号。")
         table["row_height"] = table["header_height"] = table["min_row_height"] = fixed_unit
-        unit, _ = _table_row_height(table, groups)
-        table["header_height"] = unit
-        table["row_height"] = unit
+        table["header_height"] = fixed_unit
+        table["row_height"] = fixed_unit
         size = preferred_size
         if size <= 0:
             raise DrawingError(f"{table['title']} 的单位行高不足。")
+        table_minimums = []
         for column in table["columns"]:
             values = [str(column["label"])]
             if material_plan is not None and column["field"] == "section":
@@ -992,15 +1026,18 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
                 for group in groups:
                     for row in group.rows:
                         rule = material_plan.bindings[row.source_row].rule
-                        if material_plan.factory.geometry(rule).height * size > unit - 0.6 + 1e-5:
+                        if material_plan.factory.geometry(rule).height * size > fixed_unit - 0.6 + 1e-5:
                             raise DrawingError(f"{sheet.name} 第 {row.source_row} 行材质符号超过固定行高，请调整整表参数。")
             else:
                 values.extend(row.value_for(column["field"]) for group in groups for row in group.rows)
                 width = max(font.text_width_ex(_safe_drawing_text(value), size) for value in values) + 1.2
             # Small numerical tolerance is not additional user-visible padding.
-            minimums.append(width + 0.01)
+            minimum = width + 0.01
+            minimums.append(minimum)
+            table_minimums.append(minimum)
             weights.append(float(column["width"]))
         prepared.append((table, groups, size))
+        minimums_by_table.append(table_minimums)
     needed = sum(minimums)
     if needed > available + 1e-6:
         raise DrawingError(
@@ -1016,8 +1053,13 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
     spare = budget - needed
     index = 0
     x = left
+    overflowed = False
     for table_index, (table, groups, size) in enumerate(prepared):
         table["x"] = x
+        # tables_for_categories may have applied note avoidance at its
+        # provisional x. Recompute against this final normal-layout position.
+        table["top"] = layout_top
+        table["max_height"] = layout_top - layout_bottom
         for column in table["columns"]:
             column["width"] = minimums[index] + spare * weights[index] / total_weight
             index += 1
@@ -1026,11 +1068,66 @@ def _prepare_tables(sheet: SheetData, template: SiteTemplate, material_plan=None
         if isinstance(note, dict) and x < float(note["x"]) + float(note["width"]) and x + table_width > float(note["x"]):
             limit = table["top"] - (float(note["y"]) + float(note["height"]) + 6)
             table["max_height"] = min(table["max_height"], limit)
+        try:
             unit, _ = _table_row_height(table, groups)
             table["header_height"] = table["row_height"] = unit
             prepared[table_index] = (table, groups, size)
+        except DrawingError:
+            overflowed = True
         x += table_width + gap
-    return prepared
+    if not overflowed:
+        return prepared
+
+    # Continuation mode deliberately uses measured minimum widths only. Fixed
+    # widths make the physical column count independent of spare-space reflow.
+    left = float(layout.get("left", min(t["x"] for t in tables)))
+    right = float(layout.get("right", float(template.paper.get("revision_left", 392)) - 6))
+    gap = float(layout.get("horizontal_gap", 8))
+    note = template.data.get("note_area")
+    continued: list[tuple[dict, list[MemberGroup], float]] = []
+    current_x = left
+    for table_index, (source_table, all_groups, size) in enumerate(prepared):
+        table_minimums = minimums_by_table[table_index]
+        table_width = sum(table_minimums)
+        remaining = list(all_groups)
+        continuation_number = 1
+        while remaining:
+            if current_x + table_width > right + 1e-6:
+                raise DrawingError(
+                    f"工作表“{sheet.name}”续表需要更多横向空间：在固定字号和最小列宽下，"
+                    f"第 {continuation_number} 个表格将超出可用范围 {right:g} mm。"
+                )
+            table = copy.deepcopy(source_table)
+            table["x"] = current_x
+            table["columns"] = copy.deepcopy(source_table["columns"])
+            for column, width in zip(table["columns"], table_minimums):
+                column["width"] = width
+            table["top"] = layout_top
+            table["header_height"] = fixed_unit
+            table["row_height"] = fixed_unit
+            table["min_row_height"] = fixed_unit
+            table["max_height"] = layout_top - layout_bottom
+            if isinstance(note, dict):
+                note_left = float(note.get("x", 0.0))
+                note_right = note_left + float(note.get("width", 0.0))
+                if current_x < note_right and current_x + table_width > note_left:
+                    note_bottom = float(note.get("y", 0.0)) + float(note.get("height", 0.0)) + 6.0
+                    table["max_height"] = min(table["max_height"], layout_top - note_bottom)
+            capacity = math.floor((float(table["max_height"]) + 1e-8) / fixed_unit) - 1
+            if capacity < 1:
+                raise DrawingError(
+                    f"工作表“{sheet.name}”的续表与注记区冲突后没有可用数据行空间；"
+                    "请调整表格范围或注记区。"
+                )
+            column_groups, remaining = _take_group_rows(remaining, capacity)
+            if not column_groups:
+                raise DrawingError(f"工作表“{sheet.name}”无法在续表中放入下一部件组。")
+            if continuation_number > 1:
+                table["title"] = f"{source_table['title']} ({continuation_number})"
+            continued.append((table, column_groups, size))
+            continuation_number += 1
+            current_x += table_width + gap
+    return continued
 
 
 def _table_font_caps(

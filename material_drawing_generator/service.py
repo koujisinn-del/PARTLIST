@@ -115,12 +115,15 @@ def generate_drawings(
         raise ValueError("当前程序目录缺少 DWG 转换组件，请补齐组件后生成 DWG；PDF/DXF 可独立使用。尚未开始生成或修改 Excel。")
     workbook = read_workbook(excel_path, template, descending=descending)
     material_plans = None
+    from .drawing import _prepare_tables
     if template.material_symbols_enabled:
         from .material_drawing import prepare_material_job
-        from .drawing import _prepare_tables
         _library, material_plans = prepare_material_job(workbook, _cjk_font_filename())
-        for sheet in workbook.sheets:
-            _prepare_tables(sheet, template, material_plans[sheet.name])
+    # Validate every sheet's fixed-grid layout before the Excel marker is
+    # applied or output files are staged, whether symbols are enabled or not.
+    for sheet in workbook.sheets:
+        plan = material_plans[sheet.name] if material_plans is not None else None
+        _prepare_tables(sheet, template, plan)
     output_root = Path(output_directory).resolve()
     output_root.mkdir(parents=True, exist_ok=True)
     highlight_result = apply_submission_highlighting(excel_path, workbook.drawing_list)

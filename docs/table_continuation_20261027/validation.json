@@ -1,0 +1,55 @@
+[
+  {
+    "example": "whole_groups",
+    "input_rows": 110,
+    "verified_rows": 110,
+    "tables": [
+      {
+        "title": "大梁部材リスト",
+        "rows": 35,
+        "members": [
+          "G1"
+        ],
+        "font_height": 1.0,
+        "row_height": 2.5
+      },
+      {
+        "title": "大梁部材リスト (2)",
+        "rows": 75,
+        "members": [
+          "g1",
+          "G2"
+        ],
+        "font_height": 1.0,
+        "row_height": 2.5
+      }
+    ],
+    "dwg_roundtrip": "passed"
+  },
+  {
+    "example": "long_group",
+    "input_rows": 100,
+    "verified_rows": 100,
+    "tables": [
+      {
+        "title": "大梁部材リスト",
+        "rows": 84,
+        "members": [
+          "G100"
+        ],
+        "font_height": 1.0,
+        "row_height": 2.5
+      },
+      {
+        "title": "大梁部材リスト (2)",
+        "rows": 16,
+        "members": [
+          "G100"
+        ],
+        "font_height": 1.0,
+        "row_height": 2.5
+      }
+    ],
+    "dwg_roundtrip": "passed"
+  }
+]

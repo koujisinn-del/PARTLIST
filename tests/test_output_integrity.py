@@ -86,8 +86,13 @@ class OutputIntegrityTests(unittest.TestCase):
         self.assertEqual({size for _, _, size in tables}, {1.0})
         self.assertEqual(tables[0][0]["title"], "大梁部材リスト")
         rows.extend(SectionRow(i + 100, f"X{i}", "大梁") for i in range(10))
-        with self.assertRaisesRegex(DrawingError, "无法放入"):
-            _prepare_tables(sheet_with(rows), self.template)
+        tables = _prepare_tables(sheet_with(rows), self.template)
+        big_beam_tables = [(table, groups) for table, groups, _ in tables if table["category"] == "大梁"]
+        self.assertEqual(len(big_beam_tables), 2)
+        self.assertEqual(big_beam_tables[0][0]["title"], "大梁部材リスト")
+        self.assertEqual(big_beam_tables[1][0]["title"], "大梁部材リスト (2)")
+        self.assertEqual(sum(len(group.rows) for _, groups in big_beam_tables for group in groups), 93)
+        self.assertEqual(sum(len(groups) for _, groups in big_beam_tables), 93)
 
     def test_font_and_grid_are_uniform_with_five_row_merge(self):
         rows = [SectionRow(i + 2, "G1", "大梁", position=f"端部{i}", section="H-100") for i in range(5)]
