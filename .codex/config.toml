@@ -1,0 +1,12 @@
+# 项目默认值；保留并继承用户级插件、权限、沙箱和其他设置。
+model = "gpt-6.1-sol"
+model_reasoning_effort = "medium"
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 2
+default_subagent_model = "gpt-6-luna"
+default_subagent_reasoning_effort = "high"
+
+# 当前版本自动发现 .codex/agents/*.toml；模型/推理不写入角色文件，
+# 以便显式启动参数覆盖这里的默认值。

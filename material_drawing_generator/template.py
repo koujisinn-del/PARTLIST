@@ -117,7 +117,9 @@ class SiteTemplate:
             "version": "R-X",
             "version_aliases": ["R-"],
             "creation_date": "20xx/xx/xx",
+            "creation_date_aliases": ["作成日"],
             "revision_date": "20XX/XX/XX",
+            "revision_date_aliases": ["日付", "提出日付"],
             "revision_spacing": 5.0,
         }
         configured = self.data.get("frame_placeholders", {})

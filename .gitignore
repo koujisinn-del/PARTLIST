@@ -3,6 +3,7 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.test-temp/
 
 # Local dependency/runtime caches. Recreate them on the target computer.
 _python_deps/

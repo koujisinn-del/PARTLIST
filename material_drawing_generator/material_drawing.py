@@ -14,7 +14,9 @@ import weakref
 
 import ezdxf
 from ezdxf import bbox
+from ezdxf.addons import text2path
 from ezdxf.fonts import fonts
+from ezdxf.npshapes import NumpyPath2d, to_matplotlib_path
 from ezdxf.math import Vec3
 
 from .materials import MaterialLibrary, SymbolRule
@@ -39,6 +41,26 @@ class SheetMaterials:
     def column_width(self, row, size: float) -> float:
         item = self.bindings[row.source_row]
         return self.factory.combined_width(item.rule, item.section, size)
+
+
+def place_text_middle_left_baseline(entity, x: float, center_y: float,
+                                    font_filename: str, size: float) -> float:
+    """Apply the production section-text placement and return its baseline y."""
+    from ezdxf.enums import TextEntityAlignment
+    from ezdxf.tools.text import TextLine, unified_alignment
+
+    text = entity.dxf.text
+    entity.set_placement((x, center_y), align=TextEntityAlignment.MIDDLE_LEFT)
+    limits = bbox.extents([entity])
+    offset = Vec3(x - limits.extmin.x, center_y - limits.center.y, 0)
+    entity.dxf.insert += offset
+    entity.dxf.align_point += offset
+    line = TextLine(text, fonts.make_font(font_filename, size))
+    horizontal, vertical = unified_alignment(entity)
+    entity.dxf.insert = line.baseline_vertices(entity.dxf.align_point, horizontal, vertical)[0]
+    entity.dxf.halign = entity.dxf.valign = 0
+    entity.dxf.discard("align_point")
+    return float(entity.dxf.insert.y)
 
 
 def prepare_material_job(workbook, font_filename: str) -> tuple[MaterialLibrary, dict[str, SheetMaterials]]:
@@ -79,6 +101,7 @@ class SymbolGeometry:
     texts: tuple[tuple[str, float, float], ...]
     lines: tuple[tuple[float, float, float, float], ...]
     circles: tuple[tuple[float, float, float], ...]
+    primitives: tuple[tuple, ...] = ()
 
 
 class SymbolFactory:
@@ -89,6 +112,7 @@ class SymbolFactory:
         self.font = fonts.make_font(font_filename, 1.0)
         self._geometry = {}
         self._text_sizes = {}
+        self._text_ink_bounds = {}
         self._installed = weakref.WeakKeyDictionary()
         self._measure_doc = ezdxf.new("R2007")
         self._measure_doc.styles.new("MEASURE", dxfattribs={"font": font_filename})
@@ -101,6 +125,77 @@ class SymbolFactory:
             self._measure_doc.modelspace().delete_entity(entity)
         return self._text_sizes[text]
 
+    def _ink_outline(self, text: str):
+        """Measure visible glyph contours at unit height, not font metric boxes."""
+        if text not in self._text_ink_bounds:
+            entity = self._measure_doc.modelspace().add_text(
+                text, dxfattribs={"style": "MEASURE", "height": 1}
+            )
+            try:
+                path = text2path.make_path_from_entity(entity)
+                paths = [NumpyPath2d(part) for part in path.sub_paths()]
+                if not paths:
+                    raise ValueError(f"文字“{text}”没有可测量的字形轮廓。")
+                bounds = to_matplotlib_path(paths, detect_holes=False).get_extents()
+                values = (bounds.x0, bounds.y0, bounds.x1, bounds.y1)
+                if not all(math.isfinite(float(value)) for value in values):
+                    raise ValueError(f"文字“{text}”的字形轮廓范围无效。")
+                self._text_ink_bounds[text] = tuple(float(value) for value in values)
+            finally:
+                self._measure_doc.modelspace().delete_entity(entity)
+        return self._text_ink_bounds[text]
+
+    @staticmethod
+    def _nearest_polygon_text_center_y(points, ink_bounds, center_x, target_y, margin=0.05):
+        """Find the closest vertical ink-box center that clears every polygon edge."""
+        area = sum(
+            x1 * y2 - x2 * y1
+            for (x1, y1), (x2, y2) in zip(points, points[1:] + points[:1])
+        )
+        if abs(area) <= 1e-12:
+            raise ValueError("材质符号外框面积无效，无法定位框内文字。")
+        orientation = 1 if area > 0 else -1
+        ink_x0, ink_y0, ink_x1, ink_y1 = ink_bounds
+        ink_center_x = (ink_x0 + ink_x1) / 2
+        ink_center_y = (ink_y0 + ink_y1) / 2
+        x_offsets = (ink_x0 - ink_center_x, ink_x1 - ink_center_x)
+        y_offsets = (ink_y0 - ink_center_y, ink_y1 - ink_center_y)
+        lower, upper = -math.inf, math.inf
+        for start, end in zip(points, points[1:] + points[:1]):
+            edge_x, edge_y = end[0] - start[0], end[1] - start[1]
+            length = math.hypot(edge_x, edge_y)
+            if length <= 1e-12:
+                raise ValueError("材质符号外框含零长度边，无法定位框内文字。")
+            inward_x = orientation * -edge_y / length
+            inward_y = orientation * edge_x / length
+            for dx in x_offsets:
+                for dy in y_offsets:
+                    constant = inward_x * (center_x + dx - start[0]) - margin
+                    if abs(inward_y) <= 1e-12:
+                        if constant < -1e-9:
+                            raise ValueError("材质符号文字宽度超过外框，无法保留必要内边距。")
+                        continue
+                    bound = start[1] - dy - constant / inward_y
+                    if inward_y > 0:
+                        lower = max(lower, bound)
+                    else:
+                        upper = min(upper, bound)
+        if lower > upper + 1e-9:
+            raise ValueError("材质符号文字高度超过外框，无法保留必要内边距。")
+        return min(max(target_y, lower), upper)
+
+    @staticmethod
+    def _translate_primitive_y(item, offset):
+        kind, *values = item
+        if kind == "LINE":
+            values[1] += offset
+            values[3] += offset
+        elif kind in {"CIRCLE", "ARC"}:
+            values[1] += offset
+        elif kind == "TEXT":
+            values[2] += offset
+        return (kind, *values)
+
     def geometry(self, rule: SymbolRule) -> SymbolGeometry:
         name = rule.block_name
         if name in self._geometry:
@@ -109,11 +204,23 @@ class SymbolFactory:
             result = SymbolGeometry(0, 0, (), (), ())
             self._geometry[name] = result
             return result
+        if rule.geometry:
+            self._validate_imported_geometry(rule)
+            x1, y1, x2, y2 = rule.geometry_bounds
+            primitives = rule.geometry
+            if rule.baseline_text_index is not None:
+                texts = [item for item in primitives if item[0] == "TEXT"]
+                offset = -texts[rule.baseline_text_index][3]
+                primitives = tuple(self._translate_primitive_y(item, offset) for item in primitives)
+                y1, y2 = y1 + offset, y2 + offset
+            result = SymbolGeometry(x2 - x1, y2 - y1, (), (), (), primitives)
+            self._geometry[name] = result
+            return result
         texts, lines, circles = [], [], []
         cursor = 0.0
         if rule.prefix:
             lo, hi = self._ink(rule.prefix)
-            texts.append((rule.prefix, -lo.x, -(lo.y + hi.y) / 2))
+            texts.append((rule.prefix, -lo.x, 0.0))
             cursor = hi.x - lo.x + 0.20
         inner_w = inner_h = 0
         if rule.inner:
@@ -149,14 +256,31 @@ class SymbolFactory:
             cx = cursor - xlo
             points = [(x + cx, y - (ylo + yhi) / 2) for x, y in points]
             rx, ry = (xhi - xlo) / 2, (yhi - ylo) / 2
-        for a, b in zip(points, points[1:] + points[:1]):
-            lines.append((*a, *b))
         if rule.inner:
-            lo, hi = self._ink(rule.inner)
-            # The polygon's incircle, rather than its bounding-box center, is
-            # the safe text anchor in asymmetric shapes (e.g. triangles).
-            cy = -(ylo + yhi) / 2 if rule.shape not in {"circle", "square"} else 0
-            texts.append((rule.inner, cx - (lo.x + hi.x) / 2, cy - (lo.y + hi.y) / 2))
+            ink_x0, ink_y0, ink_x1, ink_y1 = self._ink_outline(rule.inner)
+            if points:
+                frame_center_x = (min(x for x, _ in points) + max(x for x, _ in points)) / 2
+            else:
+                frame_center_x = cx
+            ink_center_y = (ink_y0 + ink_y1) / 2
+            frame_center_y = ink_center_y
+            if rule.shape == "triangle":
+                safe_ink_center_y = self._nearest_polygon_text_center_y(
+                    points, (ink_x0, ink_y0, ink_x1, ink_y1), frame_center_x, 0.0
+                )
+                frame_center_y = ink_center_y - safe_ink_center_y
+            texts.append((rule.inner, frame_center_x - (ink_x0 + ink_x1) / 2, 0.0))
+        else:
+            # With no enclosed letter, align the frame to a unit-cap text line.
+            frame_center_y = sum(self._ink_outline("N")[1::2]) / 2
+            if rule.prefix:
+                texts[0] = (rule.prefix, texts[0][1], 0.0)
+        if points:
+            points = [(x, y + frame_center_y) for x, y in points]
+            for a, b in zip(points, points[1:] + points[:1]):
+                lines.append((*a, *b))
+        else:
+            circles = [(x, y + frame_center_y, radius) for x, y, radius in circles]
         width = cursor + 2 * rx
         result = SymbolGeometry(width, 2 * ry, tuple(texts), tuple(lines), tuple(circles))
         self._geometry[name] = result
@@ -165,6 +289,43 @@ class SymbolFactory:
     def combined_width(self, rule: SymbolRule, section: str, size: float) -> float:
         symbol_width = self.geometry(rule).width * size
         return symbol_width + (0.4 if symbol_width else 0) + self.font.text_width_ex(section, size)
+
+    @staticmethod
+    def _add_imported_primitive(block, item, style: str) -> None:
+        kind, *values = item
+        if kind == "LINE":
+            block.add_line(values[:2], values[2:4], dxfattribs={"layer": "0", "lineweight": 13})
+        elif kind == "CIRCLE":
+            block.add_circle(values[:2], values[2], dxfattribs={"layer": "0", "lineweight": 13})
+        elif kind == "ARC":
+            block.add_arc(values[:2], values[2], values[3], values[4], dxfattribs={"layer": "0", "lineweight": 13})
+        elif kind == "TEXT":
+            text, x, y, height, rotation, width_factor = values
+            block.add_text(text, dxfattribs={"insert": (x, y), "height": height, "rotation": rotation,
+                "width": width_factor, "style": style, "layer": "0"})
+        else:
+            raise ValueError(f"材质规则含不支持图元：{kind}")
+
+    def _validate_imported_geometry(self, rule: SymbolRule) -> None:
+        """Measure embedded primitives with the active font and verify saved bounds."""
+        doc = ezdxf.new("R2007")
+        doc.styles.new("MDG_IMPORT_CHECK", dxfattribs={"font": self.font_filename})
+        block = doc.blocks.new("MDG_IMPORT_CHECK")
+        for item in rule.geometry:
+            self._add_imported_primitive(block, item, "MDG_IMPORT_CHECK")
+        extents = bbox.extents(block)
+        actual = (extents.extmin.x, extents.extmin.y, extents.extmax.x, extents.extmax.y)
+        expected = rule.geometry_bounds
+        if not all(math.isfinite(float(value)) for value in actual):
+            raise ValueError(f"材质“{rule.material}”的导入图形实际边界无效。")
+        scale = max(1.0, *(abs(float(value)) for value in (*actual, *expected)))
+        tolerance = 1e-5 * scale
+        if (abs(expected[0]) > tolerance or abs(expected[1] + expected[3]) > tolerance
+                or any(abs(float(a) - float(e)) > tolerance for a, e in zip(actual, expected))):
+            raise ValueError(
+                f"材质“{rule.material}”保存的边界与实际图元/当前字体测量结果不一致；"
+                "为避免出图越框或裁切，请重新导入并预览该符号。"
+            )
 
     def ensure_block(self, document, rule: SymbolRule, style: str) -> str:
         name = rule.block_name
@@ -181,11 +342,12 @@ class SymbolFactory:
             block.add_line((x1, y1), (x2, y2), dxfattribs={"layer": "0", "lineweight": 13})
         for x, y, radius in geom.circles:
             block.add_circle((x, y), radius, dxfattribs={"layer": "0", "lineweight": 13})
+        for item in geom.primitives:
+            self._add_imported_primitive(block, item, style)
         installed.add(name)
         return name
 
     def draw_cell(self, adapter, plan: SheetMaterials, row, x1, y1, x2, y2, size):
-        from ezdxf.enums import TextEntityAlignment
         binding = plan.bindings[row.source_row]
         rule = binding.rule
         geom = self.geometry(rule)
@@ -194,32 +356,37 @@ class SymbolFactory:
             raise ValueError(f"{plan.name} 第 {row.source_row} 行：材质符号与断面无法放入单元格，请扩大整体行高或列宽。")
         left = (x1 + x2 - width) / 2
         center_y = (y1 + y2) / 2
-        insert = None
-        if not rule.is_unmarked:
-            block_name = self.ensure_block(adapter.doc, rule, adapter.text_style)
-            insert = adapter.modelspace.add_blockref(block_name, (left, center_y), dxfattribs={
-                "xscale": size, "yscale": size, "zscale": size, "layer": "TEXT",
-            })
         text_x = left + geom.width * size + (0.4 if not rule.is_unmarked else 0)
         entity = adapter.modelspace.add_text(binding.section, dxfattribs={
             "style": adapter.text_style, "height": size, "layer": "TEXT",
         })
-        entity.set_placement((text_x, center_y), align=TextEntityAlignment.MIDDLE_LEFT)
-        limits = bbox.extents([entity])
-        offset = Vec3(text_x - limits.extmin.x, center_y - limits.center.y, 0)
-        entity.dxf.insert += offset
-        entity.dxf.align_point += offset
-        # Plain baseline TEXT avoids the conversion issue of coincident anchors.
-        from ezdxf.tools.text import TextLine, unified_alignment
-        line = TextLine(binding.section, fonts.make_font(self.font_filename, size))
-        h, v = unified_alignment(entity)
-        entity.dxf.insert = line.baseline_vertices(entity.dxf.align_point, h, v)[0]
-        entity.dxf.halign = entity.dxf.valign = 0
-        entity.dxf.discard("align_point")
+        section_baseline_y = place_text_middle_left_baseline(
+            entity, text_x, center_y, self.font_filename, size
+        )
+        insert = None
+        if not rule.is_unmarked:
+            block_name = self.ensure_block(adapter.doc, rule, adapter.text_style)
+            baseline_anchored = not rule.geometry or rule.baseline_text_index is not None
+            insert_y = section_baseline_y if baseline_anchored else center_y
+            insert = adapter.modelspace.add_blockref(block_name, (left, insert_y), dxfattribs={
+                "xscale": size, "yscale": size, "zscale": size, "layer": "TEXT",
+            })
         entities = [entity] + ([insert] if insert is not None else [])
         limits = bbox.extents(entities)
+        available_y0, available_y1 = y1 + 0.3, y2 - 0.3
+        if limits.size.y > available_y1 - available_y0 + 1e-5:
+            raise ValueError(
+                f"{plan.name} 第 {row.source_row} 行：材质符号与断面组合需要垂直空间 "
+                f"{limits.size.y:.3f}，当前可用 {available_y1 - available_y0:.3f}，未压缩字号或外框。"
+            )
+        vertical_offset = center_y - limits.center.y
+        if entity is not None:
+            entity.translate(0, vertical_offset, 0)
+        if insert is not None:
+            insert.translate(0, vertical_offset, 0)
+        limits = bbox.extents(entities)
         if (limits.extmin.x < x1 + 0.6 - 1e-5 or limits.extmax.x > x2 - 0.6 + 1e-5
-                or limits.extmin.y < y1 + 0.3 - 1e-5 or limits.extmax.y > y2 - 0.3 + 1e-5):
+                or limits.extmin.y < available_y0 - 1e-5 or limits.extmax.y > available_y1 + 1e-5):
             raise ValueError(f"{plan.name} 第 {row.source_row} 行：材质符号或断面越出单元格，未交付。")
         plan.cells.append({
             "excel_row": row.source_row, "member": row.member_name, "material_input": binding.original_material,
@@ -275,8 +442,10 @@ def material_geometry_signature(document):
                 geom = (point(entity.dxf.start), point(entity.dxf.end))
             elif kind == "CIRCLE":
                 geom = (point(entity.dxf.center), round(entity.dxf.radius, 5))
+            elif kind == "ARC":
+                geom = (point(entity.dxf.center), round(entity.dxf.radius, 5), round(entity.dxf.start_angle, 5), round(entity.dxf.end_angle, 5))
             elif kind == "TEXT":
-                geom = (entity.dxf.text, point(entity.dxf.insert), round(entity.dxf.height, 5))
+                geom = (entity.dxf.text, point(entity.dxf.insert), round(entity.dxf.height, 5), round(entity.dxf.rotation, 5), round(entity.dxf.width, 5), round(entity.dxf.oblique, 5), entity.dxf.style, entity.dxf.halign, entity.dxf.valign)
             else:
                 raise ValueError(f"材质块 {name} 中存在未支持图元 {kind}。")
             entries.append((kind, geom, entity.dxf.layer, entity.dxf.color, entity.dxf.invisible))

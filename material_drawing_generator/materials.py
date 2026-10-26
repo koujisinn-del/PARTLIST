@@ -19,6 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 from types import MappingProxyType
@@ -50,6 +51,9 @@ class SymbolRule:
     prefix: str = ""
     inner: str = ""
     shape: str = "none"
+    geometry: tuple[tuple, ...] = ()
+    geometry_bounds: tuple[float, float, float, float] = ()
+    baseline_text_index: int | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.material, str) or not material_lookup_key(self.material):
@@ -65,25 +69,77 @@ class SymbolRule:
                 raise ValueError(f"材质“{self.material}”的{label}只允许 0～3 个英文字母。")
         if self.shape == "none" and (self.prefix or self.inner):
             raise ValueError(f"材质“{self.material}”配置为无记号时，前置文字和框内文字必须为空。")
+        if self.geometry:
+            if self.shape != "none" or self.prefix or self.inner:
+                raise ValueError(f"材质“{self.material}”不能同时使用内置形状和导入图形。")
+            if len(self.geometry) > 5000 or len(self.geometry_bounds) != 4:
+                raise ValueError(f"材质“{self.material}”的导入图形数据无效。")
+            for item in self.geometry:
+                if not isinstance(item, tuple) or not item or item[0] not in {"LINE", "CIRCLE", "ARC", "TEXT"}:
+                    raise ValueError(f"材质“{self.material}”含不支持的导入图元。")
+                kind = item[0]
+                lengths = {"LINE": 5, "CIRCLE": 4, "ARC": 6, "TEXT": 7}
+                if len(item) != lengths[kind]:
+                    raise ValueError(f"材质“{self.material}”的 {kind} 图元数据长度错误。")
+                values = item[1:]
+                if kind == "TEXT":
+                    if not isinstance(values[0], str) or not values[0] or any(type(v) not in (int, float) or not math.isfinite(v) for v in values[1:]):
+                        raise ValueError(f"材质“{self.material}”的 TEXT 数据无效。")
+                    numbers = values[1:]
+                    if numbers[2] <= 0 or numbers[4] <= 0:
+                        raise ValueError(f"材质“{self.material}”的 TEXT 大小无效。")
+                elif any(type(v) not in (int, float) or not math.isfinite(v) for v in values):
+                    raise ValueError(f"材质“{self.material}”的 {kind} 数值无效。")
+                elif kind in {"CIRCLE", "ARC"} and values[2] <= 0:
+                    raise ValueError(f"材质“{self.material}”的 {kind} 半径无效。")
+            if any(type(v) not in (int, float) or not math.isfinite(v) for v in self.geometry_bounds):
+                raise ValueError(f"材质“{self.material}”的图形边界数值无效。")
+            if self.geometry_bounds[2] <= self.geometry_bounds[0] or self.geometry_bounds[3] <= self.geometry_bounds[1]:
+                raise ValueError(f"材质“{self.material}”的图形边界尺寸无效。")
+            if self.baseline_text_index is not None:
+                texts = [item for item in self.geometry if item[0] == "TEXT"]
+                index = self.baseline_text_index
+                if type(index) is not int or not 0 <= index < len(texts):
+                    raise ValueError(f"材质“{self.material}”的基线文字索引无效。")
+                reference = texts[index]
+                if not math.isclose(reference[4], 1.0, rel_tol=1e-9, abs_tol=1e-9):
+                    raise ValueError(f"材质“{self.material}”的基线文字字高必须归一为 1。")
+                if not math.isclose(reference[5] % 360, 0.0, abs_tol=1e-9):
+                    raise ValueError(f"材质“{self.material}”的基线文字必须水平旋转 0 度。")
+        elif self.geometry_bounds:
+            raise ValueError(f"材质“{self.material}”的图形边界缺少图元。")
+        elif self.baseline_text_index is not None:
+            raise ValueError(f"材质“{self.material}”的基线文字锚点只能用于导入几何。")
 
     @property
     def is_unmarked(self) -> bool:
-        return self.shape == "none"
+        return self.shape == "none" and not self.geometry
 
     @property
     def block_name(self) -> str:
         """Reuse a block when distinct material grades have the same appearance."""
-        geometry = json.dumps([self.prefix, self.inner, self.shape], ensure_ascii=True, separators=(",", ":"))
+        identity = [self.prefix, self.inner, self.shape]
+        if self.geometry:
+            identity.extend((self.geometry, self.geometry_bounds))
+            if self.baseline_text_index is not None:
+                identity.append(("baseline_text_index", self.baseline_text_index))
+        geometry = json.dumps(identity, ensure_ascii=True, separators=(",", ":"))
         return "MDG_MAT_" + hashlib.sha256(geometry.encode("ascii")).hexdigest()[:20].upper()
 
     def to_record(self) -> dict:
-        return {
+        result = {
             "material": self.material,
             "aliases": list(self.aliases),
             "prefix": self.prefix,
             "inner": self.inner,
             "shape": self.shape,
         }
+        if self.geometry:
+            result["geometry"] = [list(item) for item in self.geometry]
+            result["geometry_bounds"] = list(self.geometry_bounds)
+            if self.baseline_text_index is not None:
+                result["baseline_text_index"] = self.baseline_text_index
+        return result
 
 
 def _read_rules(path: Path) -> tuple[SymbolRule, ...]:
@@ -103,7 +159,7 @@ def _read_rules(path: Path) -> tuple[SymbolRule, ...]:
         raise ValueError(f"材质库 {path} 的 symbols 必须是列表。")
     result = []
     for index, record in enumerate(records, start=1):
-        if not isinstance(record, dict) or set(record) - {"material", "aliases", "prefix", "inner", "shape"}:
+        if not isinstance(record, dict) or set(record) - {"material", "aliases", "prefix", "inner", "shape", "geometry", "geometry_bounds", "baseline_text_index"}:
             raise ValueError(f"材质库 {path} 的第 {index} 条规则格式错误或包含未识别配置项。")
         if "material" not in record or "shape" not in record:
             raise ValueError(f"材质库 {path} 的第 {index} 条规则缺少 material 或 shape。")
@@ -111,12 +167,19 @@ def _read_rules(path: Path) -> tuple[SymbolRule, ...]:
         if not isinstance(aliases, list):
             raise ValueError(f"材质库 {path} 的第 {index} 条 aliases 必须是列表。")
         try:
+            geometry_raw = record.get("geometry", [])
+            bounds_raw = record.get("geometry_bounds", [])
+            if not isinstance(geometry_raw, list) or not isinstance(bounds_raw, list):
+                raise ValueError("导入图形必须是列表。")
             result.append(SymbolRule(
                 material=record["material"],
                 aliases=tuple(aliases),
                 prefix=record.get("prefix", ""),
                 inner=record.get("inner", ""),
                 shape=record["shape"],
+                geometry=tuple(tuple(item) if isinstance(item, list) else item for item in geometry_raw),
+                geometry_bounds=tuple(bounds_raw),
+                baseline_text_index=record.get("baseline_text_index"),
             ))
         except ValueError as exc:
             raise ValueError(f"材质库 {path} 的第 {index} 条规则无效：{exc}") from exc

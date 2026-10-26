@@ -627,6 +627,127 @@ class MaterialDrawingApp:
             messagebox.showerror(self.tr("error_title"), str(exc), parent=self.root)
             return
         legend.pack(fill="both", expand=True)
+        ttk.Button(frame, text=self.tr("material_import_symbol"),
+                   command=lambda: self._import_material_symbol(window)).pack(anchor="e", pady=(10, 0))
+
+    def _import_material_symbol(self, library_window):
+        from .drawing import _cjk_font_filename
+        from .material_preview import symbol_section_preview_png
+        from .material_symbol_import import inspect_drawing, build_rule, append_custom_rule, text_reference_index, TextReferenceError
+        from .materials import MaterialLibrary
+        import base64
+
+        tr = self.tr
+        dialog = tk.Toplevel(library_window)
+        dialog.title(tr("material_import_title"))
+        dialog.transient(library_window)
+        dialog.geometry("640x660")
+        dialog.minsize(600, 620)
+        form = ttk.Frame(dialog, padding=14)
+        form.pack(fill="both", expand=True)
+        form.columnconfigure(1, weight=1)
+        ttk.Label(form, text=tr("material_import_name")).grid(row=0, column=0, sticky="w", pady=4)
+        name_var = tk.StringVar()
+        ttk.Entry(form, textvariable=name_var).grid(row=0, column=1, sticky="ew", pady=4)
+        ttk.Label(form, text=tr("material_import_aliases")).grid(row=1, column=0, sticky="w", pady=4)
+        aliases_var = tk.StringVar()
+        ttk.Entry(form, textvariable=aliases_var).grid(row=1, column=1, sticky="ew", pady=4)
+        ttk.Label(form, text=tr("material_import_file")).grid(row=2, column=0, sticky="w", pady=4)
+        path_var = tk.StringVar()
+        path_frame = ttk.Frame(form); path_frame.grid(row=2, column=1, sticky="ew", pady=4); path_frame.columnconfigure(0, weight=1)
+        ttk.Entry(path_frame, textvariable=path_var).grid(row=0, column=0, sticky="ew")
+        def browse():
+            value = filedialog.askopenfilename(parent=dialog, title=tr("material_import_file"),
+                filetypes=(("CAD", "*.dxf *.dwg"), ("DXF", "*.dxf"), ("DWG", "*.dwg")))
+            if value: path_var.set(value)
+        ttk.Button(path_frame, text=tr("select"), command=browse).grid(row=0, column=1, padx=(6, 0))
+        mode_var = tk.StringVar(value="text")
+        ttk.Label(form, text=tr("material_import_scale")).grid(row=3, column=0, sticky="nw", pady=5)
+        modes = ttk.Frame(form); modes.grid(row=3, column=1, sticky="w", pady=4)
+        ttk.Radiobutton(modes, text=tr("material_import_text_mode"), variable=mode_var, value="text").pack(anchor="w")
+        ttk.Radiobutton(modes, text=tr("material_import_circle_mode"), variable=mode_var, value="circle").pack(anchor="w")
+        ttk.Radiobutton(modes, text=tr("material_import_height_mode"), variable=mode_var, value="height").pack(anchor="w")
+        ttk.Label(form, text=tr("material_import_base_circle")).grid(row=4, column=0, sticky="w", pady=4)
+        circle_var = tk.StringVar()
+        circle_combo = ttk.Combobox(form, textvariable=circle_var, state="readonly", width=42)
+        circle_combo.grid(row=4, column=1, sticky="ew", pady=4)
+        ttk.Label(form, text=tr("material_import_base_text")).grid(row=5, column=0, sticky="w", pady=4)
+        text_var = tk.StringVar()
+        text_combo = ttk.Combobox(form, textvariable=text_var, state="readonly", width=42)
+        text_combo.grid(row=5, column=1, sticky="ew", pady=4)
+        def update_mode(*_args):
+            circle_combo.configure(state="readonly" if mode_var.get() == "circle" else "disabled")
+            text_combo.configure(state="readonly" if mode_var.get() == "text" else "disabled")
+        mode_var.trace_add("write", update_mode)
+        update_mode()
+        previews = ttk.Frame(form); previews.grid(row=7, column=0, columnspan=2, sticky="nsew", pady=12)
+        previews.columnconfigure(0, weight=1)
+        ttk.Label(previews, text=tr("material_import_section_preview")).grid(row=0, column=0)
+        image_label = ttk.Label(previews)
+        image_label.grid(row=1, column=0, padx=4, pady=8)
+        status = ttk.Label(form, text=tr("material_import_hint"), wraplength=550)
+        status.grid(row=8, column=0, columnspan=2, sticky="w", pady=5)
+        state = {"rule": None, "image": None, "snapshot": None}
+        def snapshot():
+            return (name_var.get(), aliases_var.get(), path_var.get(), mode_var.get(), circle_var.get(), text_var.get())
+        def load_preview():
+            try:
+                if not name_var.get().strip(): raise ValueError(tr("material_import_name_required"))
+                aliases = tuple(part.strip() for part in aliases_var.get().replace("，", ",").split(",") if part.strip())
+                raw, circles = inspect_drawing(Path(path_var.get().strip()), _cjk_font_filename())
+                values = [tr("material_import_circle_option", index=i, diameter=f"{d:.4g}", x=f"{x:.4g}", y=f"{y:.4g}") for i, d, x, y in circles]
+                circle_combo.configure(values=values)
+                if len(circles) == 1 and (not circle_var.get() or circle_var.get() not in values): circle_var.set(values[0])
+                elif circle_var.get() not in values: circle_var.set("")
+                if not circles: circle_var.set("")
+                texts = [item for item in raw if item[0] == "TEXT"]
+                text_values = [tr("material_import_text_option", index=i + 1, text=item[1],
+                    height=f"{item[4]:.6g}", x=f"{item[2]:.6g}", y=f"{item[3]:.6g}")
+                    for i, item in enumerate(texts)]
+                text_combo.configure(values=text_values)
+                if text_var.get() not in text_values:
+                    text_var.set("")
+                    if texts:
+                        try:
+                            text_var.set(text_values[text_reference_index(raw)])
+                        except ValueError:
+                            pass  # Mixed sizes require an explicit reference choice.
+                mode = mode_var.get()
+                if mode == "circle" and not circles: raise ValueError(tr("material_import_no_circle"))
+                if mode == "circle" and len(circles) > 1 and not circle_var.get(): raise ValueError(tr("material_import_select_circle"))
+                index = values.index(circle_var.get()) if mode == "circle" else None
+                text_index = text_values.index(text_var.get()) if mode == "text" and text_var.get() else None
+                state["rule"] = build_rule(name_var.get().strip(), aliases, raw, mode, index,
+                    _cjk_font_filename(), text_index=text_index)
+                state["image"] = tk.PhotoImage(master=dialog, data=base64.b64encode(
+                    symbol_section_preview_png(state["rule"], _cjk_font_filename(), 120, 550)).decode("ascii"))
+                image_label.configure(image=state["image"])
+                state["snapshot"] = snapshot()
+                message = tr("material_import_ready", width=f"{state['rule'].geometry_bounds[2]:.3f}", height=f"{state['rule'].geometry_bounds[3]-state['rule'].geometry_bounds[1]:.3f}")
+                if mode == "text":
+                    message += "\n" + tr("material_import_text_note")
+                status.configure(text=message)
+            except TextReferenceError as exc:
+                state["rule"] = None
+                messagebox.showerror(tr("error_title"), tr("material_import_" + exc.code), parent=dialog)
+            except Exception as exc:
+                state["rule"] = None
+                messagebox.showerror(tr("error_title"), str(exc), parent=dialog)
+        ttk.Button(form, text=tr("material_import_preview_button"), command=load_preview).grid(row=6, column=1, sticky="e", pady=6)
+        def save_rule():
+            if state["rule"] is None:
+                messagebox.showerror(tr("error_title"), tr("material_import_preview_first"), parent=dialog); return
+            if state["snapshot"] != snapshot():
+                state["rule"] = None
+                messagebox.showerror(tr("error_title"), tr("material_import_preview_first"), parent=dialog); return
+            if not messagebox.askyesno(tr("material_import_confirm_title"), tr("material_import_confirm"), parent=dialog): return
+            try:
+                append_custom_rule(state["rule"])
+                MaterialLibrary.load()
+            except Exception as exc:
+                messagebox.showerror(tr("error_title"), str(exc), parent=dialog); return
+            dialog.destroy(); library_window.destroy(); self._show_material_library()
+        ttk.Button(form, text=tr("material_import_save"), command=save_rule).grid(row=9, column=1, sticky="e", pady=8)
 
     def _output_path(self) -> Path:
         value = self.output_var.get().strip()
